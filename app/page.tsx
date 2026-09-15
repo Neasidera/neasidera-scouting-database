@@ -85,7 +85,7 @@ export default function Home() {
       <section className="cta" id="accesso">
         <span>NEASIDERA SCOUTING</span>
         <h2>Il prossimo talento<br />potrebbe essere qui.</h2>
-        <a href="#registrazione" className="primary-button">
+        <a href="/login" className="primary-button">
           Inizia ora →
         </a>
       </section>
