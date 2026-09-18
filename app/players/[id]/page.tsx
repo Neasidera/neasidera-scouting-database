@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type Player = {
   id: string;
+  user_id: string;
   nome: string | null;
   cognome: string | null;
   data_nascita: string | null;
@@ -26,6 +27,7 @@ export default function PlayerDetailPage() {
   const supabase = createClient();
 
   const [player, setPlayer] = useState<Player | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -40,10 +42,12 @@ export default function PlayerDetailPage() {
         return;
       }
 
+      setCurrentUserId(user.id);
+
       const { data, error } = await supabase
         .from("players")
         .select(
-          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, bio"
+          "id, user_id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, bio"
         )
         .eq("id", params.id)
         .eq("visibile", true)
@@ -86,9 +90,7 @@ export default function PlayerDetailPage() {
   function formatDate(date: string | null) {
     if (!date) return "—";
 
-    const formatted = new Date(date).toLocaleDateString("it-IT");
-
-    return formatted;
+    return new Date(date).toLocaleDateString("it-IT");
   }
 
   if (loading) {
@@ -113,6 +115,7 @@ export default function PlayerDetailPage() {
         <section className="dashboard-content">
           <div className="dashboard-card">
             <span>ERRORE</span>
+
             <h2>{message}</h2>
 
             <button onClick={() => router.push("/players")}>
@@ -125,6 +128,7 @@ export default function PlayerDetailPage() {
   }
 
   const age = calculateAge(player.data_nascita);
+  const isOwner = currentUserId === player.user_id;
 
   return (
     <main className="dashboard-page">
@@ -151,33 +155,36 @@ export default function PlayerDetailPage() {
         <a href="/players" className="player-back">
           ← Torna al database
         </a>
+
         <div className="player-detail-header">
-  <div>
-    <span>{player.ruolo ?? "GIOCATORE"}</span>
+          <div>
+            <span>{player.ruolo ?? "GIOCATORE"}</span>
 
-    <h1>
-      {player.nome ?? ""}{" "}
-      <strong>{player.cognome ?? ""}</strong>
-    </h1>
+            <h1>
+              {player.nome ?? ""}{" "}
+              <strong>{player.cognome ?? ""}</strong>
+            </h1>
 
-    <p>
-      {player.club ?? "Club non specificato"}
-      {player.categoria
-        ? ` · ${player.categoria}`
-        : ""}
-    </p>
-  </div>
+            <p>
+              {player.club ?? "Club non specificato"}
+              {player.categoria
+                ? ` · ${player.categoria}`
+                : ""}
+            </p>
+          </div>
 
-  <div className="player-detail-actions">
-    <a
-      href={`/players/${player.id}/edit`}
-      className="player-edit-button"
-    >
-      ✏️ Modifica giocatore
-    </a>
-  </div>
-</div>
-      
+          {isOwner && (
+            <div className="player-detail-actions">
+              <a
+                href={`/players/${player.id}/edit`}
+                className="player-edit-button"
+              >
+                ✏️ Modifica giocatore
+              </a>
+            </div>
+          )}
+        </div>
+
         <div className="player-detail-grid">
           <div className="dashboard-card">
             <span>DATI ANAGRAFICI</span>
