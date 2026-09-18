@@ -1,4 +1,3 @@
-```tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -365,25 +364,18 @@ export default function PlayerDetailPage() {
             <div className="player-info-list">
               <div>
                 <small>Data di nascita</small>
-
-                <strong>
-                  {formatDate(player.birth_date)}
-                </strong>
+                <strong>{formatDate(player.birth_date)}</strong>
               </div>
 
               <div>
                 <small>Età</small>
-
                 <strong>
-                  {age !== null
-                    ? age + " anni"
-                    : "—"}
+                  {age !== null ? age + " anni" : "—"}
                 </strong>
               </div>
 
               <div>
                 <small>Altezza</small>
-
                 <strong>
                   {player.height_cm
                     ? player.height_cm + " cm"
@@ -393,7 +385,6 @@ export default function PlayerDetailPage() {
 
               <div>
                 <small>Piede</small>
-
                 <strong>
                   {player.preferred_foot ?? "—"}
                 </strong>
@@ -401,10 +392,7 @@ export default function PlayerDetailPage() {
 
               <div>
                 <small>Città</small>
-
-                <strong>
-                  {player.city ?? "—"}
-                </strong>
+                <strong>{player.city ?? "—"}</strong>
               </div>
             </div>
           </div>
@@ -417,7 +405,6 @@ export default function PlayerDetailPage() {
             <div className="player-info-list">
               <div>
                 <small>Posizione</small>
-
                 <strong>
                   {player.primary_position ?? "—"}
                 </strong>
@@ -425,7 +412,6 @@ export default function PlayerDetailPage() {
 
               <div>
                 <small>Club</small>
-
                 <strong>
                   {player.current_club ?? "—"}
                 </strong>
@@ -433,7 +419,6 @@ export default function PlayerDetailPage() {
 
               <div>
                 <small>Categoria</small>
-
                 <strong>
                   {player.current_team_category ?? "—"}
                 </strong>
@@ -456,4 +441,3 @@ export default function PlayerDetailPage() {
     </main>
   );
 }
-```
