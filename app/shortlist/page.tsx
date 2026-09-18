@@ -37,40 +37,56 @@ export default function ShortlistPage() {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("shortlists")
-        .select(
-          `
-          player_id,
-          players (
-            id,
-            nome,
-            cognome,
-            altezza,
-            piede,
-            ruolo,
-            posizione,
-            club,
-            categoria,
-            provincia
-          )
-        `
-        )
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      // 1. Recuperiamo i giocatori salvati nella shortlist
+      const { data: shortlistData, error: shortlistError } =
+        await supabase
+          .from("shortlists")
+          .select("player_id, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
 
-      if (error) {
-        setMessage(error.message);
+      if (shortlistError) {
+        setMessage(shortlistError.message);
         setLoading(false);
         return;
       }
 
-      const formattedPlayers =
-        data
-          ?.map((item: any) => item.players)
-          .filter(Boolean) ?? [];
+      if (!shortlistData || shortlistData.length === 0) {
+        setPlayers([]);
+        setLoading(false);
+        return;
+      }
 
-      setPlayers(formattedPlayers);
+      const playerIds = shortlistData.map(
+        (item) => item.player_id
+      );
+
+      // 2. Recuperiamo i dati dei giocatori
+      const { data: playerData, error: playerError } =
+        await supabase
+          .from("players")
+          .select(
+            "id, nome, cognome, altezza, piede, ruolo, posizione, club, categoria, provincia"
+          )
+          .in("id", playerIds)
+          .eq("visibile", true);
+
+      if (playerError) {
+        setMessage(playerError.message);
+        setLoading(false);
+        return;
+      }
+
+      // Manteniamo l'ordine della shortlist
+      const orderedPlayers = playerIds
+        .map((id) =>
+          (playerData ?? []).find(
+            (player) => player.id === id
+          )
+        )
+        .filter(Boolean) as Player[];
+
+      setPlayers(orderedPlayers);
       setLoading(false);
     }
 
@@ -87,8 +103,12 @@ export default function ShortlistPage() {
       const searchMatch =
         !searchText ||
         fullName.includes(searchText) ||
-        (player.club ?? "").toLowerCase().includes(searchText) ||
-        (player.posizione ?? "").toLowerCase().includes(searchText);
+        (player.club ?? "")
+          .toLowerCase()
+          .includes(searchText) ||
+        (player.posizione ?? "")
+          .toLowerCase()
+          .includes(searchText);
 
       const ruoloMatch =
         !ruolo || player.ruolo === ruolo;
@@ -175,16 +195,22 @@ export default function ShortlistPage() {
                   setRuolo(event.target.value)
                 }
               >
-                <option value="">Tutti i ruoli</option>
+                <option value="">
+                  Tutti i ruoli
+                </option>
+
                 <option value="Portiere">
                   Portiere
                 </option>
+
                 <option value="Difensore">
                   Difensore
                 </option>
+
                 <option value="Centrocampista">
                   Centrocampista
                 </option>
+
                 <option value="Attaccante">
                   Attaccante
                 </option>
@@ -211,7 +237,9 @@ export default function ShortlistPage() {
         </div>
 
         {message && (
-          <p className="auth-message">{message}</p>
+          <p className="auth-message">
+            {message}
+          </p>
         )}
 
         {filteredPlayers.length === 0 ? (
@@ -270,7 +298,7 @@ export default function ShortlistPage() {
                   <p>{player.posizione}</p>
                 )}
 
-                <strong>⭐</strong>
+                <strong>★</strong>
               </div>
             ))}
           </div>
