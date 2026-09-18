@@ -29,7 +29,6 @@ export default function PlayerDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [shortlistId, setShortlistId] = useState<string | null>(null);
   const [isShortlisted, setIsShortlisted] = useState(false);
-
   const [loading, setLoading] = useState(true);
   const [shortlistLoading, setShortlistLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -70,9 +69,6 @@ export default function PlayerDetailPage() {
 
       setPlayer(data);
 
-      /*
-       * TROVA LA SHORTLIST DELL'UTENTE
-       */
       const {
         data: shortlist,
         error: shortlistError,
@@ -85,7 +81,8 @@ export default function PlayerDetailPage() {
 
       if (shortlistError) {
         setMessage(
-          `Errore caricamento shortlist: ${shortlistError.message}`
+          "Errore caricamento shortlist: " +
+            shortlistError.message
         );
         setLoading(false);
         return;
@@ -94,9 +91,6 @@ export default function PlayerDetailPage() {
       let currentShortlistId =
         shortlist?.id ?? null;
 
-      /*
-       * SE NON ESISTE, CREA LA SHORTLIST
-       */
       if (!currentShortlistId) {
         const {
           data: newShortlist,
@@ -114,10 +108,9 @@ export default function PlayerDetailPage() {
 
         if (createError || !newShortlist) {
           setMessage(
-            `Errore creazione shortlist: ${
-              createError?.message ||
-              "impossibile creare la shortlist"
-            }`
+            "Errore creazione shortlist: " +
+              (createError?.message ||
+                "impossibile creare la shortlist")
           );
           setLoading(false);
           return;
@@ -128,9 +121,6 @@ export default function PlayerDetailPage() {
 
       setShortlistId(currentShortlistId);
 
-      /*
-       * CONTROLLA SE IL GIOCATORE È GIÀ PRESENTE
-       */
       const {
         data: savedPlayer,
         error: savedPlayerError,
@@ -146,7 +136,8 @@ export default function PlayerDetailPage() {
 
       if (savedPlayerError) {
         setMessage(
-          `Errore controllo shortlist: ${savedPlayerError.message}`
+          "Errore controllo shortlist: " +
+            savedPlayerError.message
         );
       } else {
         setIsShortlisted(!!savedPlayer);
@@ -158,9 +149,6 @@ export default function PlayerDetailPage() {
     loadPlayer();
   }, [params.id, router]);
 
-  /*
-   * AGGIUNGI / RIMUOVI DALLA SHORTLIST
-   */
   async function toggleShortlist() {
     if (
       !player ||
@@ -185,7 +173,8 @@ export default function PlayerDetailPage() {
 
       if (error) {
         setMessage(
-          `Errore nella rimozione: ${error.message}`
+          "Errore nella rimozione: " +
+            error.message
         );
       } else {
         setIsShortlisted(false);
@@ -200,7 +189,8 @@ export default function PlayerDetailPage() {
 
       if (error) {
         setMessage(
-          `Errore nell'aggiunta: ${error.message}`
+          "Errore nell'aggiunta: " +
+            error.message
         );
       } else {
         setIsShortlisted(true);
@@ -355,7 +345,8 @@ export default function PlayerDetailPage() {
                 "Club non specificato"}
 
               {player.current_team_category
-                ? ` · ${player.current_team_category}`
+                ? " · " +
+                  player.current_team_category
                 : ""}
             </p>
           </div>
@@ -379,7 +370,11 @@ export default function PlayerDetailPage() {
 
             {isOwner && (
               <a
-                href={`/players/${player.id}/edit`}
+                href={
+                  "/players/" +
+                  player.id +
+                  "/edit"
+                }
                 className="player-edit-button"
               >
                 ✏️ Modifica giocatore
@@ -420,7 +415,7 @@ export default function PlayerDetailPage() {
 
                 <strong>
                   {age !== null
-                    ? `${age} anni`
+                    ? age + " anni"
                     : "—"}
                 </strong>
               </div>
@@ -430,7 +425,8 @@ export default function PlayerDetailPage() {
 
                 <strong>
                   {player.height_cm
-                    ? `${player.height_cm} cm`
+                    ? player.height_cm +
+                      " cm"
                     : "—"}
                 </strong>
               </div>
