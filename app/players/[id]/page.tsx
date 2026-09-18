@@ -151,7 +151,7 @@ export default function PlayerDetailPage() {
         <a href="/players" className="player-back">
           ← Torna al database
         </a>
-<div className="player-detail-header">
+        <div className="player-detail-header">
   <div>
     <span>{player.ruolo ?? "GIOCATORE"}</span>
 
@@ -177,7 +177,7 @@ export default function PlayerDetailPage() {
     </a>
   </div>
 </div>
-       
+      
         <div className="player-detail-grid">
           <div className="dashboard-card">
             <span>DATI ANAGRAFICI</span>
