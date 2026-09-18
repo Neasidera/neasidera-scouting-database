@@ -118,11 +118,40 @@ export default function PlayersPage() {
         ) : (
       <div className="dashboard-grid">
   {filteredPlayers.map((player) => (
-    <a
-      href={`/players/${player.id}`}
+    <div
       className="dashboard-card"
       key={player.id}
+      onClick={() => {
+        window.location.href = `/players/${player.id}`;
+      }}
+      style={{ cursor: "pointer" }}
     >
+      <span>{player.ruolo ?? "GIOCATORE"}</span>
+
+      <h2>
+        {player.nome ?? ""} {player.cognome ?? ""}
+      </h2>
+
+      <p>
+        {player.club ?? "Club non specificato"}
+      </p>
+
+      <p>
+        {player.altezza
+          ? `${player.altezza} cm`
+          : "Altezza non specificata"}
+        {" · "}
+        {player.piede ?? "Piede non specificato"}
+      </p>
+
+      {player.posizione && (
+        <p>{player.posizione}</p>
+      )}
+
+      <strong>→</strong>
+    </div>
+  ))}
+</div>
       <span>{player.ruolo ?? "GIOCATORE"}</span>
 
       <h2>
