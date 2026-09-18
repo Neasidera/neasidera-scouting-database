@@ -116,9 +116,39 @@ export default function PlayersPage() {
             </p>
           </div>
         ) : (
-          <div className="dashboard-grid">
-            {players.map((player) => (
-              <div className="dashboard-card" key={player.id}>
+      <div className="dashboard-grid">
+  {filteredPlayers.map((player) => (
+    <a
+      href={`/players/${player.id}`}
+      className="dashboard-card"
+      key={player.id}
+    >
+      <span>{player.ruolo ?? "GIOCATORE"}</span>
+
+      <h2>
+        {player.nome ?? ""} {player.cognome ?? ""}
+      </h2>
+
+      <p>
+        {player.club ?? "Club non specificato"}
+      </p>
+
+      <p>
+        {player.altezza
+          ? `${player.altezza} cm`
+          : "Altezza non specificata"}
+        {" · "}
+        {player.piede ?? "Piede non specificato"}
+      </p>
+
+      {player.posizione && (
+        <p>{player.posizione}</p>
+      )}
+
+      <strong>→</strong>
+    </a>
+  ))}
+</div>
                 <span>{player.ruolo ?? "GIOCATORE"}</span>
 
                 <h2>
