@@ -1,4 +1,3 @@
-```tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -60,9 +59,7 @@ export default function PlayerDetailPage() {
         .single();
 
       if (error || !data) {
-        setMessage(
-          error?.message || "Giocatore non trovato."
-        );
+        setMessage(error?.message || "Giocatore non trovato.");
         setLoading(false);
         return;
       }
@@ -88,8 +85,7 @@ export default function PlayerDetailPage() {
         return;
       }
 
-      let currentShortlistId =
-        shortlist?.id ?? null;
+      let currentShortlistId = shortlist?.id ?? null;
 
       if (!currentShortlistId) {
         const {
@@ -100,8 +96,7 @@ export default function PlayerDetailPage() {
           .insert({
             user_id: user.id,
             name: "La mia shortlist",
-            description:
-              "Giocatori salvati per lo scouting",
+            description: "Giocatori salvati per lo scouting",
           })
           .select("id")
           .single();
@@ -127,10 +122,7 @@ export default function PlayerDetailPage() {
       } = await supabase
         .from("shortlist_players")
         .select("player_id")
-        .eq(
-          "shortlist_id",
-          currentShortlistId
-        )
+        .eq("shortlist_id", currentShortlistId)
         .eq("player_id", playerId)
         .maybeSingle();
 
@@ -150,11 +142,7 @@ export default function PlayerDetailPage() {
   }, [params.id, router]);
 
   async function toggleShortlist() {
-    if (
-      !player ||
-      !shortlistId ||
-      shortlistLoading
-    ) {
+    if (!player || !shortlistId || shortlistLoading) {
       return;
     }
 
@@ -165,16 +153,12 @@ export default function PlayerDetailPage() {
       const { error } = await supabase
         .from("shortlist_players")
         .delete()
-        .eq(
-          "shortlist_id",
-          shortlistId
-        )
+        .eq("shortlist_id", shortlistId)
         .eq("player_id", player.id);
 
       if (error) {
         setMessage(
-          "Errore nella rimozione: " +
-            error.message
+          "Errore nella rimozione: " + error.message
         );
       } else {
         setIsShortlisted(false);
@@ -189,8 +173,7 @@ export default function PlayerDetailPage() {
 
       if (error) {
         setMessage(
-          "Errore nell'aggiunta: " +
-            error.message
+          "Errore nell'aggiunta: " + error.message
         );
       } else {
         setIsShortlisted(true);
@@ -200,9 +183,7 @@ export default function PlayerDetailPage() {
     setShortlistLoading(false);
   }
 
-  function calculateAge(
-    date: string | null
-  ) {
+  function calculateAge(date: string | null) {
     if (!date) return null;
 
     const birthDate = new Date(date);
@@ -219,8 +200,7 @@ export default function PlayerDetailPage() {
     if (
       monthDifference < 0 ||
       (monthDifference === 0 &&
-        today.getDate() <
-          birthDate.getDate())
+        today.getDate() < birthDate.getDate())
     ) {
       age--;
     }
@@ -228,14 +208,10 @@ export default function PlayerDetailPage() {
     return age;
   }
 
-  function formatDate(
-    date: string | null
-  ) {
+  function formatDate(date: string | null) {
     if (!date) return "—";
 
-    return new Date(date).toLocaleDateString(
-      "it-IT"
-    );
+    return new Date(date).toLocaleDateString("it-IT");
   }
 
   if (loading) {
@@ -252,10 +228,7 @@ export default function PlayerDetailPage() {
     return (
       <main className="dashboard-page">
         <header className="dashboard-header">
-          <a
-            href="/dashboard"
-            className="dashboard-logo"
-          >
+          <a href="/dashboard" className="dashboard-logo">
             NEASIDERA
             <span>SCOUTING</span>
           </a>
@@ -266,15 +239,10 @@ export default function PlayerDetailPage() {
             <span>ERRORE</span>
 
             <h2>
-              {message ||
-                "Giocatore non trovato."}
+              {message || "Giocatore non trovato."}
             </h2>
 
-            <button
-              onClick={() =>
-                router.push("/players")
-              }
-            >
+            <button onClick={() => router.push("/players")}>
               ← Torna ai giocatori
             </button>
           </div>
@@ -283,34 +251,25 @@ export default function PlayerDetailPage() {
     );
   }
 
-  const age = calculateAge(
-    player.birth_date
-  );
+  const age = calculateAge(player.birth_date);
 
-  const isOwner =
-    currentUserId === player.user_id;
+  const isOwner = currentUserId === player.user_id;
 
   return (
     <main className="dashboard-page">
       <header className="dashboard-header">
-        <a
-          href="/dashboard"
-          className="dashboard-logo"
-        >
+        <a href="/dashboard" className="dashboard-logo">
           NEASIDERA
           <span>SCOUTING</span>
         </a>
 
         <div className="dashboard-user">
-          <a href="/players">
-            ← Giocatori
-          </a>
+          <a href="/players">← Giocatori</a>
 
           <button
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href =
-                "/login";
+              window.location.href = "/login";
             }}
           >
             Esci
@@ -319,34 +278,26 @@ export default function PlayerDetailPage() {
       </header>
 
       <section className="dashboard-content">
-        <a
-          href="/players"
-          className="player-back"
-        >
+        <a href="/players" className="player-back">
           ← Torna al database
         </a>
 
         <div className="player-detail-header">
           <div>
             <span>
-              {player.primary_position ??
-                "GIOCATORE"}
+              {player.primary_position ?? "GIOCATORE"}
             </span>
 
             <h1>
               {player.first_name ?? ""}{" "}
-              <strong>
-                {player.last_name ?? ""}
-              </strong>
+              <strong>{player.last_name ?? ""}</strong>
             </h1>
 
             <p>
-              {player.current_club ??
-                "Club non specificato"}
+              {player.current_club ?? "Club non specificato"}
 
               {player.current_team_category
-                ? " · " +
-                  player.current_team_category
+                ? " · " + player.current_team_category
                 : ""}
             </p>
           </div>
@@ -356,10 +307,7 @@ export default function PlayerDetailPage() {
               type="button"
               className="player-shortlist-button"
               onClick={toggleShortlist}
-              disabled={
-                shortlistLoading ||
-                !shortlistId
-              }
+              disabled={shortlistLoading || !shortlistId}
             >
               {shortlistLoading
                 ? "Salvataggio..."
@@ -370,11 +318,7 @@ export default function PlayerDetailPage() {
 
             {isOwner && (
               <a
-                href={
-                  "/players/" +
-                  player.id +
-                  "/edit"
-                }
+                href={"/players/" + player.id + "/edit"}
                 className="player-edit-button"
               >
                 ✏️ Modifica giocatore
@@ -391,22 +335,16 @@ export default function PlayerDetailPage() {
 
         <div className="player-detail-grid">
           <div className="dashboard-card">
-            <span>
-              DATI ANAGRAFICI
-            </span>
+            <span>DATI ANAGRAFICI</span>
 
             <h2>Informazioni</h2>
 
             <div className="player-info-list">
               <div>
-                <small>
-                  Data di nascita
-                </small>
+                <small>Data di nascita</small>
 
                 <strong>
-                  {formatDate(
-                    player.birth_date
-                  )}
+                  {formatDate(player.birth_date)}
                 </strong>
               </div>
 
@@ -414,9 +352,7 @@ export default function PlayerDetailPage() {
                 <small>Età</small>
 
                 <strong>
-                  {age !== null
-                    ? age + " anni"
-                    : "—"}
+                  {age !== null ? age + " anni" : "—"}
                 </strong>
               </div>
 
@@ -425,8 +361,7 @@ export default function PlayerDetailPage() {
 
                 <strong>
                   {player.height_cm
-                    ? player.height_cm +
-                      " cm"
+                    ? player.height_cm + " cm"
                     : "—"}
                 </strong>
               </div>
@@ -435,8 +370,7 @@ export default function PlayerDetailPage() {
                 <small>Piede</small>
 
                 <strong>
-                  {player.preferred_foot ??
-                    "—"}
+                  {player.preferred_foot ?? "—"}
                 </strong>
               </div>
 
@@ -451,21 +385,16 @@ export default function PlayerDetailPage() {
           </div>
 
           <div className="dashboard-card">
-            <span>
-              PROFILO CALCISTICO
-            </span>
+            <span>PROFILO CALCISTICO</span>
 
             <h2>Caratteristiche</h2>
 
             <div className="player-info-list">
               <div>
-                <small>
-                  Posizione
-                </small>
+                <small>Posizione</small>
 
                 <strong>
-                  {player.primary_position ??
-                    "—"}
+                  {player.primary_position ?? "—"}
                 </strong>
               </div>
 
@@ -473,19 +402,15 @@ export default function PlayerDetailPage() {
                 <small>Club</small>
 
                 <strong>
-                  {player.current_club ??
-                    "—"}
+                  {player.current_club ?? "—"}
                 </strong>
               </div>
 
               <div>
-                <small>
-                  Categoria
-                </small>
+                <small>Categoria</small>
 
                 <strong>
-                  {player.current_team_category ??
-                    "—"}
+                  {player.current_team_category ?? "—"}
                 </strong>
               </div>
             </div>
@@ -506,4 +431,3 @@ export default function PlayerDetailPage() {
     </main>
   );
 }
-```
