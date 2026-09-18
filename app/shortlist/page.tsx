@@ -1,30 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 type Player = {
   id: string;
-  nome: string | null;
-  cognome: string | null;
-  altezza: number | null;
-  piede: string | null;
-  ruolo: string | null;
-  posizione: string | null;
-  club: string | null;
-  categoria: string | null;
-  provincia: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  birth_date: string | null;
+  height_cm: number | null;
+  preferred_foot: string | null;
+  primary_position: string | null;
+  current_club: string | null;
+  current_team_category: string | null;
+  city: string | null;
 };
 
 export default function ShortlistPage() {
+  const router = useRouter();
   const supabase = createClient();
 
   const [players, setPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
-
-  const [search, setSearch] = useState("");
-  const [ruolo, setRuolo] = useState("");
 
   useEffect(() => {
     async function loadShortlist() {
@@ -33,56 +32,75 @@ export default function ShortlistPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        window.location.href = "/login";
+        router.replace("/login");
         return;
       }
 
-      // 1. Recuperiamo i giocatori salvati nella shortlist
-      const { data: shortlistData, error: shortlistError } =
+      // Trova la shortlist dell'utente
+      const { data: shortlist, error: shortlistError } =
         await supabase
           .from("shortlists")
-          .select("player_id, created_at")
+          .select("id")
           .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
+          .limit(1)
+          .maybeSingle();
 
       if (shortlistError) {
-        setMessage(shortlistError.message);
+        setMessage("Errore nel caricamento della shortlist.");
         setLoading(false);
         return;
       }
 
-      if (!shortlistData || shortlistData.length === 0) {
+      // Se non esiste ancora una shortlist
+      if (!shortlist) {
         setPlayers([]);
         setLoading(false);
         return;
       }
 
-      const playerIds = shortlistData.map(
-        (item) => item.player_id
-      );
-
-      // 2. Recuperiamo i dati dei giocatori
-      const { data: playerData, error: playerError } =
+      // Trova i giocatori salvati
+      const { data: shortlistPlayers, error: playersError } =
         await supabase
-          .from("players")
-          .select(
-            "id, nome, cognome, altezza, piede, ruolo, posizione, club, categoria, provincia"
-          )
-          .in("id", playerIds)
-          .eq("visibile", true);
+          .from("shortlist_players")
+          .select("player_id, added_at")
+          .eq("shortlist_id", shortlist.id)
+          .order("added_at", { ascending: false });
 
-      if (playerError) {
-        setMessage(playerError.message);
+      if (playersError) {
+        setMessage("Errore nel caricamento dei giocatori.");
         setLoading(false);
         return;
       }
 
-      // Manteniamo l'ordine della shortlist
+      if (!shortlistPlayers || shortlistPlayers.length === 0) {
+        setPlayers([]);
+        setLoading(false);
+        return;
+      }
+
+      const playerIds = shortlistPlayers.map(
+        (item) => item.player_id
+      );
+
+      // Recupera i profili
+      const { data: playerData, error: playerDataError } =
+        await supabase
+          .from("players")
+          .select(
+            "id, first_name, last_name, birth_date, height_cm, preferred_foot, primary_position, current_club, current_team_category, city"
+          )
+          .in("id", playerIds);
+
+      if (playerDataError) {
+        setMessage("Errore nel caricamento dei profili.");
+        setLoading(false);
+        return;
+      }
+
+      // Mantiene l'ordine della shortlist
       const orderedPlayers = playerIds
         .map((id) =>
-          (playerData ?? []).find(
-            (player) => player.id === id
-          )
+          playerData?.find((player) => player.id === id)
         )
         .filter(Boolean) as Player[];
 
@@ -91,35 +109,63 @@ export default function ShortlistPage() {
     }
 
     loadShortlist();
-  }, [supabase]);
+  }, [router, supabase]);
 
-  const filteredPlayers = useMemo(() => {
-    return players.filter((player) => {
-      const searchText = search.toLowerCase();
+  async function removeFromShortlist(playerId: string) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-      const fullName =
-        `${player.nome ?? ""} ${player.cognome ?? ""}`.toLowerCase();
+    if (!user) return;
 
-      const searchMatch =
-        !searchText ||
-        fullName.includes(searchText) ||
-        (player.club ?? "")
-          .toLowerCase()
-          .includes(searchText) ||
-        (player.posizione ?? "")
-          .toLowerCase()
-          .includes(searchText);
+    const { data: shortlist } = await supabase
+      .from("shortlists")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle();
 
-      const ruoloMatch =
-        !ruolo || player.ruolo === ruolo;
+    if (!shortlist) return;
 
-      return searchMatch && ruoloMatch;
-    });
-  }, [players, search, ruolo]);
+    const { error } = await supabase
+      .from("shortlist_players")
+      .delete()
+      .eq("shortlist_id", shortlist.id)
+      .eq("player_id", playerId);
 
-  function resetFilters() {
-    setSearch("");
-    setRuolo("");
+    if (error) {
+      setMessage("Errore durante la rimozione.");
+      return;
+    }
+
+    setPlayers((current) =>
+      current.filter((player) => player.id !== playerId)
+    );
+  }
+
+  function calculateAge(date: string | null) {
+    if (!date) return null;
+
+    const birthDate = new Date(date);
+    const today = new Date();
+
+    let age =
+      today.getFullYear() -
+      birthDate.getFullYear();
+
+    const monthDifference =
+      today.getMonth() -
+      birthDate.getMonth();
+
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 &&
+        today.getDate() < birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
   }
 
   if (loading) {
@@ -135,12 +181,17 @@ export default function ShortlistPage() {
   return (
     <main className="dashboard-page">
       <header className="dashboard-header">
-        <a href="/dashboard" className="dashboard-logo">
+        <a
+          href="/dashboard"
+          className="dashboard-logo"
+        >
           NEASIDERA<span>SCOUTING</span>
         </a>
 
         <div className="dashboard-user">
-          <a href="/players">Giocatori</a>
+          <a href="/players">
+            ← Database
+          </a>
 
           <button
             onClick={async () => {
@@ -154,86 +205,21 @@ export default function ShortlistPage() {
       </header>
 
       <section className="dashboard-content">
-        <div className="dashboard-welcome">
-          <span>SCOUTING</span>
-
-          <h1>
-            La mia <strong>shortlist.</strong>
-          </h1>
-
-          <p>
-            I giocatori che hai salvato per tenerli
-            sotto osservazione.
-          </p>
-        </div>
-
-        <div className="players-filters">
-          <div className="profile-field players-search">
-            <label htmlFor="search">
-              Cerca giocatore
-            </label>
-
-            <input
-              id="search"
-              type="text"
-              placeholder="Nome, cognome, club o posizione..."
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-            />
+        <div className="dashboard-section-header">
+          <div>
+            <span>SCOUTING</span>
+            <h1>La mia shortlist</h1>
+            <p>
+              I giocatori che hai salvato per il tuo scouting.
+            </p>
           </div>
 
-          <div className="players-filter-grid">
-            <div className="profile-field">
-              <label htmlFor="ruolo">Ruolo</label>
-
-              <select
-                id="ruolo"
-                value={ruolo}
-                onChange={(event) =>
-                  setRuolo(event.target.value)
-                }
-              >
-                <option value="">
-                  Tutti i ruoli
-                </option>
-
-                <option value="Portiere">
-                  Portiere
-                </option>
-
-                <option value="Difensore">
-                  Difensore
-                </option>
-
-                <option value="Centrocampista">
-                  Centrocampista
-                </option>
-
-                <option value="Attaccante">
-                  Attaccante
-                </option>
-              </select>
-            </div>
+          <div className="shortlist-count">
+            {players.length}{" "}
+            {players.length === 1
+              ? "giocatore"
+              : "giocatori"}
           </div>
-
-          <button
-            type="button"
-            className="filter-reset"
-            onClick={resetFilters}
-          >
-            Azzera filtri
-          </button>
-        </div>
-
-        <div className="players-results-header">
-          <span>
-            {filteredPlayers.length}{" "}
-            {filteredPlayers.length === 1
-              ? "giocatore salvato"
-              : "giocatori salvati"}
-          </span>
         </div>
 
         {message && (
@@ -242,65 +228,124 @@ export default function ShortlistPage() {
           </p>
         )}
 
-        {filteredPlayers.length === 0 ? (
+        {players.length === 0 ? (
           <div className="dashboard-card">
             <span>SHORTLIST VUOTA</span>
 
             <h2>
-              Nessun giocatore salvato.
+              Non hai ancora salvato giocatori
             </h2>
 
             <p>
-              Vai nel database e aggiungi i giocatori
+              Vai nel database e aggiungi i profili
               che vuoi tenere sotto osservazione.
             </p>
 
-            <a href="/players">
+            <button
+              onClick={() => router.push("/players")}
+            >
               Vai al database →
-            </a>
+            </button>
           </div>
         ) : (
-          <div className="dashboard-grid">
-            {filteredPlayers.map((player) => (
-              <div
-                className="dashboard-card"
-                key={player.id}
-                onClick={() => {
-                  window.location.href =
-                    `/players/${player.id}`;
-                }}
-                style={{ cursor: "pointer" }}
-              >
-                <span>
-                  {player.ruolo ?? "GIOCATORE"}
-                </span>
+          <div className="players-grid">
+            {players.map((player) => {
+              const age = calculateAge(
+                player.birth_date
+              );
 
-                <h2>
-                  {player.nome ?? ""}{" "}
-                  {player.cognome ?? ""}
-                </h2>
+              return (
+                <div
+                  key={player.id}
+                  className="player-card"
+                >
+                  <div
+                    className="player-card-main"
+                    onClick={() =>
+                      router.push(
+                        `/players/${player.id}`
+                      )
+                    }
+                  >
+                    <div className="player-card-top">
+                      <span>
+                        {player.primary_position ??
+                          "GIOCATORE"}
+                      </span>
 
-                <p>
-                  {player.club ??
-                    "Club non specificato"}
-                </p>
+                      <strong>
+                        {player.first_name ?? ""}{" "}
+                        {player.last_name ?? ""}
+                      </strong>
+                    </div>
 
-                <p>
-                  {player.altezza
-                    ? `${player.altezza} cm`
-                    : "Altezza non specificata"}
-                  {" · "}
-                  {player.piede ??
-                    "Piede non specificato"}
-                </p>
+                    <div className="player-card-info">
+                      <div>
+                        <small>ETÀ</small>
+                        <strong>
+                          {age !== null
+                            ? age
+                            : "—"}
+                        </strong>
+                      </div>
 
-                {player.posizione && (
-                  <p>{player.posizione}</p>
-                )}
+                      <div>
+                        <small>ALTEZZA</small>
+                        <strong>
+                          {player.height_cm
+                            ? `${player.height_cm} cm`
+                            : "—"}
+                        </strong>
+                      </div>
 
-                <strong>★</strong>
-              </div>
-            ))}
+                      <div>
+                        <small>PIEDE</small>
+                        <strong>
+                          {player.preferred_foot ??
+                            "—"}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <p>
+                      {player.current_club ??
+                        "Club non specificato"}
+                      {player.current_team_category
+                        ? ` · ${player.current_team_category}`
+                        : ""}
+                    </p>
+
+                    {player.city && (
+                      <small>
+                        📍 {player.city}
+                      </small>
+                    )}
+                  </div>
+
+                  <div className="player-card-actions">
+                    <button
+                      onClick={() =>
+                        router.push(
+                          `/players/${player.id}`
+                        )
+                      }
+                    >
+                      Vedi profilo
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        removeFromShortlist(
+                          player.id
+                        )
+                      }
+                    >
+                      Rimuovi
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
