@@ -151,25 +151,33 @@ export default function PlayerDetailPage() {
         <a href="/players" className="player-back">
           ← Torna al database
         </a>
+<div className="player-detail-header">
+  <div>
+    <span>{player.ruolo ?? "GIOCATORE"}</span>
 
-        <div className="player-detail-header">
-          <div>
-            <span>{player.ruolo ?? "GIOCATORE"}</span>
+    <h1>
+      {player.nome ?? ""}{" "}
+      <strong>{player.cognome ?? ""}</strong>
+    </h1>
 
-            <h1>
-              {player.nome ?? ""}{" "}
-              <strong>{player.cognome ?? ""}</strong>
-            </h1>
+    <p>
+      {player.club ?? "Club non specificato"}
+      {player.categoria
+        ? ` · ${player.categoria}`
+        : ""}
+    </p>
+  </div>
 
-            <p>
-              {player.club ?? "Club non specificato"}
-              {player.categoria
-                ? ` · ${player.categoria}`
-                : ""}
-            </p>
-          </div>
-        </div>
-
+  <div className="player-detail-actions">
+    <a
+      href={`/players/${player.id}/edit`}
+      className="player-edit-button"
+    >
+      ✏️ Modifica giocatore
+    </a>
+  </div>
+</div>
+       
         <div className="player-detail-grid">
           <div className="dashboard-card">
             <span>DATI ANAGRAFICI</span>
