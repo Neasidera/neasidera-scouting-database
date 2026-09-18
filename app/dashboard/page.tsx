@@ -76,40 +76,34 @@ export default function DashboardPage() {
         </div>
 
         <div className="dashboard-grid">
-         <a href="/profile" className="dashboard-card">
-  <span>03</span>
-  <h2>Il mio profilo</h2>
-  <p>
-    Completa e gestisci il tuo profilo.
-  </p>
-  <strong>→</strong>
-</a>
-          <button className="dashboard-card">
-            <span>02</span>
+
+          <a href="/players" className="dashboard-card">
+            <span>01</span>
             <h2>Cerca giocatori</h2>
             <p>
               Trova profili utilizzando filtri avanzati.
             </p>
             <strong>→</strong>
-          </button>
+          </a>
 
-          <button className="dashboard-card">
+          <a href="/shortlist" className="dashboard-card">
+            <span>02</span>
+            <h2>Shortlist</h2>
+            <p>
+              Salva e organizza i giocatori che ti interessano.
+            </p>
+            <strong>→</strong>
+          </a>
+
+          <a href="/profile" className="dashboard-card">
             <span>03</span>
             <h2>Il mio profilo</h2>
             <p>
               Completa e gestisci il tuo profilo.
             </p>
             <strong>→</strong>
-          </button>
+          </a>
 
-          <button className="dashboard-card">
-            <span>04</span>
-            <h2>Shortlist</h2>
-            <p>
-              Salva e organizza i giocatori che ti interessano.
-            </p>
-            <strong>→</strong>
-          </button>
         </div>
       </section>
     </main>
