@@ -1,3 +1,4 @@
+```tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -28,12 +29,16 @@ export default function PlayerDetailPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [shortlistId, setShortlistId] = useState<string | null>(null);
   const [isShortlisted, setIsShortlisted] = useState(false);
-  const [shortlistLoading, setShortlistLoading] = useState(false);
+
   const [loading, setLoading] = useState(true);
+  const [shortlistLoading, setShortlistLoading] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
     async function loadPlayer() {
+      setLoading(true);
+      setMessage("");
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -45,55 +50,105 @@ export default function PlayerDetailPage() {
 
       setCurrentUserId(user.id);
 
+      const playerId = String(params.id);
+
       const { data, error } = await supabase
         .from("players")
         .select(
           "id, user_id, first_name, last_name, birth_date, height_cm, preferred_foot, primary_position, current_club, current_team_category, city, bio"
         )
-        .eq("id", params.id)
+        .eq("id", playerId)
         .single();
 
-      if (error) {
-        setMessage("Giocatore non trovato.");
+      if (error || !data) {
+        setMessage(
+          error?.message || "Giocatore non trovato."
+        );
         setLoading(false);
         return;
       }
 
       setPlayer(data);
 
-      const { data: shortlist } = await supabase
+      /*
+       * TROVA LA SHORTLIST DELL'UTENTE
+       */
+      const {
+        data: shortlist,
+        error: shortlistError,
+      } = await supabase
         .from("shortlists")
         .select("id")
         .eq("user_id", user.id)
         .limit(1)
         .maybeSingle();
 
-      let currentShortlistId = shortlist?.id ?? null;
+      if (shortlistError) {
+        setMessage(
+          `Errore caricamento shortlist: ${shortlistError.message}`
+        );
+        setLoading(false);
+        return;
+      }
 
+      let currentShortlistId =
+        shortlist?.id ?? null;
+
+      /*
+       * SE NON ESISTE, CREA LA SHORTLIST
+       */
       if (!currentShortlistId) {
-        const { data: newShortlist } = await supabase
+        const {
+          data: newShortlist,
+          error: createError,
+        } = await supabase
           .from("shortlists")
           .insert({
             user_id: user.id,
             name: "La mia shortlist",
-            description: "Giocatori salvati per lo scouting",
+            description:
+              "Giocatori salvati per lo scouting",
           })
           .select("id")
           .single();
 
-        currentShortlistId = newShortlist?.id ?? null;
+        if (createError || !newShortlist) {
+          setMessage(
+            `Errore creazione shortlist: ${
+              createError?.message ||
+              "impossibile creare la shortlist"
+            }`
+          );
+          setLoading(false);
+          return;
+        }
+
+        currentShortlistId = newShortlist.id;
       }
 
       setShortlistId(currentShortlistId);
 
-      if (currentShortlistId) {
-        const { data: savedPlayer } = await supabase
-          .from("shortlist_players")
-          .select("player_id")
-          .eq("shortlist_id", currentShortlistId)
-          .eq("player_id", params.id)
-          .maybeSingle();
+      /*
+       * CONTROLLA SE IL GIOCATORE È GIÀ PRESENTE
+       */
+      const {
+        data: savedPlayer,
+        error: savedPlayerError,
+      } = await supabase
+        .from("shortlist_players")
+        .select("player_id")
+        .eq(
+          "shortlist_id",
+          currentShortlistId
+        )
+        .eq("player_id", playerId)
+        .maybeSingle();
 
+      if (savedPlayerError) {
+        setMessage(
+          `Errore controllo shortlist: ${savedPlayerError.message}`
+        );
+      } else {
         setIsShortlisted(!!savedPlayer);
       }
 
@@ -101,12 +156,15 @@ export default function PlayerDetailPage() {
     }
 
     loadPlayer();
-  }, [params.id, router, supabase]);
+  }, [params.id, router]);
 
+  /*
+   * AGGIUNGI / RIMUOVI DALLA SHORTLIST
+   */
   async function toggleShortlist() {
     if (
-      !shortlistId ||
       !player ||
+      !shortlistId ||
       shortlistLoading
     ) {
       return;
@@ -119,12 +177,15 @@ export default function PlayerDetailPage() {
       const { error } = await supabase
         .from("shortlist_players")
         .delete()
-        .eq("shortlist_id", shortlistId)
+        .eq(
+          "shortlist_id",
+          shortlistId
+        )
         .eq("player_id", player.id);
 
       if (error) {
         setMessage(
-          "Errore nella rimozione dalla shortlist."
+          `Errore nella rimozione: ${error.message}`
         );
       } else {
         setIsShortlisted(false);
@@ -139,7 +200,7 @@ export default function PlayerDetailPage() {
 
       if (error) {
         setMessage(
-          "Errore nell'aggiunta alla shortlist."
+          `Errore nell'aggiunta: ${error.message}`
         );
       } else {
         setIsShortlisted(true);
@@ -149,7 +210,9 @@ export default function PlayerDetailPage() {
     setShortlistLoading(false);
   }
 
-  function calculateAge(date: string | null) {
+  function calculateAge(
+    date: string | null
+  ) {
     if (!date) return null;
 
     const birthDate = new Date(date);
@@ -166,7 +229,8 @@ export default function PlayerDetailPage() {
     if (
       monthDifference < 0 ||
       (monthDifference === 0 &&
-        today.getDate() < birthDate.getDate())
+        today.getDate() <
+          birthDate.getDate())
     ) {
       age--;
     }
@@ -174,7 +238,9 @@ export default function PlayerDetailPage() {
     return age;
   }
 
-  function formatDate(date: string | null) {
+  function formatDate(
+    date: string | null
+  ) {
     if (!date) return "—";
 
     return new Date(date).toLocaleDateString(
@@ -200,7 +266,8 @@ export default function PlayerDetailPage() {
             href="/dashboard"
             className="dashboard-logo"
           >
-            NEASIDERA<span>SCOUTING</span>
+            NEASIDERA
+            <span>SCOUTING</span>
           </a>
         </header>
 
@@ -208,7 +275,10 @@ export default function PlayerDetailPage() {
           <div className="dashboard-card">
             <span>ERRORE</span>
 
-            <h2>{message}</h2>
+            <h2>
+              {message ||
+                "Giocatore non trovato."}
+            </h2>
 
             <button
               onClick={() =>
@@ -237,7 +307,8 @@ export default function PlayerDetailPage() {
           href="/dashboard"
           className="dashboard-logo"
         >
-          NEASIDERA<span>SCOUTING</span>
+          NEASIDERA
+          <span>SCOUTING</span>
         </a>
 
         <div className="dashboard-user">
@@ -248,7 +319,8 @@ export default function PlayerDetailPage() {
           <button
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href = "/login";
+              window.location.href =
+                "/login";
             }}
           >
             Esci
@@ -281,6 +353,7 @@ export default function PlayerDetailPage() {
             <p>
               {player.current_club ??
                 "Club non specificato"}
+
               {player.current_team_category
                 ? ` · ${player.current_team_category}`
                 : ""}
@@ -292,7 +365,10 @@ export default function PlayerDetailPage() {
               type="button"
               className="player-shortlist-button"
               onClick={toggleShortlist}
-              disabled={shortlistLoading}
+              disabled={
+                shortlistLoading ||
+                !shortlistId
+              }
             >
               {shortlistLoading
                 ? "Salvataggio..."
@@ -320,7 +396,9 @@ export default function PlayerDetailPage() {
 
         <div className="player-detail-grid">
           <div className="dashboard-card">
-            <span>DATI ANAGRAFICI</span>
+            <span>
+              DATI ANAGRAFICI
+            </span>
 
             <h2>Informazioni</h2>
 
@@ -432,3 +510,4 @@ export default function PlayerDetailPage() {
     </main>
   );
 }
+```
