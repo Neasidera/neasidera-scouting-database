@@ -28,6 +28,8 @@ export default function PlayerDetailPage() {
 
   const [player, setPlayer] = useState<Player | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isShortlisted, setIsShortlisted] = useState(false);
+  const [shortlistLoading, setShortlistLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -55,15 +57,65 @@ export default function PlayerDetailPage() {
 
       if (error) {
         setMessage("Giocatore non trovato.");
-      } else {
-        setPlayer(data);
+        setLoading(false);
+        return;
       }
 
+      setPlayer(data);
+
+      const { data: shortlistData } = await supabase
+        .from("shortlists")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("player_id", params.id)
+        .maybeSingle();
+
+      setIsShortlisted(!!shortlistData);
       setLoading(false);
     }
 
     loadPlayer();
   }, [params.id, router, supabase]);
+
+  async function toggleShortlist() {
+    if (!currentUserId || !player || shortlistLoading) return;
+
+    setShortlistLoading(true);
+    setMessage("");
+
+    if (isShortlisted) {
+      const { error } = await supabase
+        .from("shortlists")
+        .delete()
+        .eq("user_id", currentUserId)
+        .eq("player_id", player.id);
+
+      if (error) {
+        setMessage("Errore nella rimozione dalla shortlist.");
+      } else {
+        setIsShortlisted(false);
+      }
+    } else {
+      const { error } = await supabase
+        .from("shortlists")
+        .insert({
+          user_id: currentUserId,
+          player_id: player.id,
+        });
+
+      if (error) {
+        if (error.code === "23505") {
+          setIsShortlisted(true);
+        } else {
+          setMessage("Errore nell'aggiunta alla shortlist.");
+        }
+      } else {
+        setIsShortlisted(true);
+      }
+    }
+
+    setShortlistLoading(false);
+  }
 
   function calculateAge(date: string | null) {
     if (!date) return null;
@@ -173,17 +225,34 @@ export default function PlayerDetailPage() {
             </p>
           </div>
 
-          {isOwner && (
-            <div className="player-detail-actions">
+          <div className="player-detail-actions">
+            <button
+              type="button"
+              className="player-shortlist-button"
+              onClick={toggleShortlist}
+              disabled={shortlistLoading}
+            >
+              {shortlistLoading
+                ? "Salvataggio..."
+                : isShortlisted
+                ? "★ Nella shortlist"
+                : "☆ Aggiungi alla shortlist"}
+            </button>
+
+            {isOwner && (
               <a
                 href={`/players/${player.id}/edit`}
                 className="player-edit-button"
               >
                 ✏️ Modifica giocatore
               </a>
-            </div>
-          )}
+            )}
+          </div>
         </div>
+
+        {message && (
+          <p className="auth-message">{message}</p>
+        )}
 
         <div className="player-detail-grid">
           <div className="dashboard-card">
