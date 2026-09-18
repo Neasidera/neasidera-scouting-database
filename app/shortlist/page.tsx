@@ -32,7 +32,16 @@ export default function ShortlistPage() {
 
       const {
         data: { user },
+        error: userError,
       } = await supabase.auth.getUser();
+
+      if (userError) {
+        setMessage(
+          "Errore autenticazione: " + userError.message
+        );
+        setLoading(false);
+        return;
+      }
 
       if (!user) {
         router.replace("/login");
@@ -46,6 +55,7 @@ export default function ShortlistPage() {
         .from("shortlists")
         .select("id")
         .eq("user_id", user.id)
+        .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
 
@@ -65,33 +75,30 @@ export default function ShortlistPage() {
       }
 
       const {
-        data: shortlistPlayers,
-        error: shortlistPlayersError,
+        data: savedPlayers,
+        error: savedPlayersError,
       } = await supabase
         .from("shortlist_players")
         .select("player_id, added_at")
         .eq("shortlist_id", shortlist.id)
         .order("added_at", { ascending: false });
 
-      if (shortlistPlayersError) {
+      if (savedPlayersError) {
         setMessage(
-          "Errore caricamento giocatori: " +
-            shortlistPlayersError.message
+          "Errore caricamento giocatori salvati: " +
+            savedPlayersError.message
         );
         setLoading(false);
         return;
       }
 
-      if (
-        !shortlistPlayers ||
-        shortlistPlayers.length === 0
-      ) {
+      if (!savedPlayers || savedPlayers.length === 0) {
         setPlayers([]);
         setLoading(false);
         return;
       }
 
-      const playerIds = shortlistPlayers.map(
+      const playerIds = savedPlayers.map(
         (item) => item.player_id
       );
 
@@ -120,7 +127,9 @@ export default function ShortlistPage() {
             (player) => player.id === id
           )
         )
-        .filter(Boolean) as Player[];
+        .filter(
+          (player): player is Player => Boolean(player)
+        );
 
       setPlayers(orderedPlayers);
       setLoading(false);
@@ -132,6 +141,8 @@ export default function ShortlistPage() {
   async function removeFromShortlist(
     playerId: string
   ) {
+    setMessage("");
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -148,12 +159,14 @@ export default function ShortlistPage() {
       .from("shortlists")
       .select("id")
       .eq("user_id", user.id)
+      .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
 
     if (shortlistError || !shortlist) {
       setMessage(
-        "Impossibile trovare la shortlist."
+        shortlistError?.message ||
+          "Impossibile trovare la shortlist."
       );
       return;
     }
@@ -179,9 +192,7 @@ export default function ShortlistPage() {
     );
   }
 
-  function calculateAge(
-    date: string | null
-  ) {
+  function calculateAge(date: string | null) {
     if (!date) return null;
 
     const birthDate = new Date(date);
@@ -198,8 +209,7 @@ export default function ShortlistPage() {
     if (
       monthDifference < 0 ||
       (monthDifference === 0 &&
-        today.getDate() <
-          birthDate.getDate())
+        today.getDate() < birthDate.getDate())
     ) {
       age--;
     }
@@ -234,6 +244,7 @@ export default function ShortlistPage() {
           </a>
 
           <button
+            type="button"
             onClick={async () => {
               await supabase.auth.signOut();
               window.location.href = "/login";
@@ -285,6 +296,7 @@ export default function ShortlistPage() {
             </p>
 
             <button
+              type="button"
               onClick={() =>
                 router.push("/players")
               }
@@ -308,8 +320,7 @@ export default function ShortlistPage() {
                     className="player-card-main"
                     onClick={() =>
                       router.push(
-                        "/players/" +
-                          player.id
+                        "/players/" + player.id
                       )
                     }
                   >
@@ -376,10 +387,10 @@ export default function ShortlistPage() {
 
                   <div className="player-card-actions">
                     <button
+                      type="button"
                       onClick={() =>
                         router.push(
-                          "/players/" +
-                            player.id
+                          "/players/" + player.id
                         )
                       }
                     >
@@ -387,6 +398,7 @@ export default function ShortlistPage() {
                     </button>
 
                     <button
+                      type="button"
                       onClick={() =>
                         removeFromShortlist(
                           player.id
