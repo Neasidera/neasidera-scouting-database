@@ -6,15 +6,18 @@ import { createClient } from "@/lib/supabase/client";
 
 type Player = {
   id: string;
-  first_name: string | null;
-  last_name: string | null;
-  birth_date: string | null;
-  height_cm: number | null;
-  preferred_foot: string | null;
-  primary_position: string | null;
-  current_club: string | null;
-  current_team_category: string | null;
-  city: string | null;
+  nome: string | null;
+  cognome: string | null;
+  data_nascita: string | null;
+  altezza: number | null;
+  piede: string | null;
+  ruolo: string | null;
+  posizione: string | null;
+  club: string | null;
+  categoria: string | null;
+  provincia: string | null;
+  video: string | null;
+  bio: string | null;
 };
 
 export default function ShortlistPage() {
@@ -32,16 +35,7 @@ export default function ShortlistPage() {
 
       const {
         data: { user },
-        error: userError,
       } = await supabase.auth.getUser();
-
-      if (userError) {
-        setMessage(
-          "Errore autenticazione: " + userError.message
-        );
-        setLoading(false);
-        return;
-      }
 
       if (!user) {
         router.replace("/login");
@@ -53,9 +47,8 @@ export default function ShortlistPage() {
         error: shortlistError,
       } = await supabase
         .from("shortlists")
-        .select("id")
+        .select("id, name, description")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: true })
         .limit(1)
         .maybeSingle();
 
@@ -75,74 +68,60 @@ export default function ShortlistPage() {
       }
 
       const {
-        data: savedPlayers,
-        error: savedPlayersError,
+        data: shortlistPlayers,
+        error: shortlistPlayersError,
       } = await supabase
         .from("shortlist_players")
-        .select("player_id, added_at")
-        .eq("shortlist_id", shortlist.id)
-        .order("added_at", { ascending: false });
+        .select("player_id")
+        .eq("shortlist_id", shortlist.id);
 
-      if (savedPlayersError) {
+      if (shortlistPlayersError) {
         setMessage(
-          "Errore caricamento giocatori salvati: " +
-            savedPlayersError.message
+          "Errore caricamento giocatori: " +
+            shortlistPlayersError.message
         );
         setLoading(false);
         return;
       }
 
-      if (!savedPlayers || savedPlayers.length === 0) {
+      const playerIds =
+        shortlistPlayers?.map(
+          (item) => item.player_id
+        ) ?? [];
+
+      if (playerIds.length === 0) {
         setPlayers([]);
         setLoading(false);
         return;
       }
 
-      const playerIds = savedPlayers.map(
-        (item) => item.player_id
-      );
-
       const {
         data: playerData,
-        error: playerDataError,
+        error: playersError,
       } = await supabase
         .from("players")
         .select(
-          "id, first_name, last_name, birth_date, height_cm, preferred_foot, primary_position, current_club, current_team_category, city"
+          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, bio"
         )
         .in("id", playerIds);
 
-      if (playerDataError) {
+      if (playersError) {
         setMessage(
           "Errore caricamento profili: " +
-            playerDataError.message
+            playersError.message
         );
         setLoading(false);
         return;
       }
 
-      const orderedPlayers = playerIds
-        .map((id) =>
-          playerData?.find(
-            (player) => player.id === id
-          )
-        )
-        .filter(
-          (player): player is Player => Boolean(player)
-        );
-
-      setPlayers(orderedPlayers);
+      setPlayers(playerData ?? []);
       setLoading(false);
     }
 
     loadShortlist();
   }, [router]);
 
-  async function removeFromShortlist(
-    playerId: string
-  ) {
-    setMessage("");
-
+  async function removeFromShortlist(playerId: string) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -159,14 +138,12 @@ export default function ShortlistPage() {
       .from("shortlists")
       .select("id")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
 
     if (shortlistError || !shortlist) {
       setMessage(
-        shortlistError?.message ||
-          "Impossibile trovare la shortlist."
+        "Impossibile trovare la shortlist."
       );
       return;
     }
@@ -179,7 +156,7 @@ export default function ShortlistPage() {
 
     if (error) {
       setMessage(
-        "Errore durante la rimozione: " +
+        "Errore nella rimozione: " +
           error.message
       );
       return;
@@ -190,31 +167,6 @@ export default function ShortlistPage() {
         (player) => player.id !== playerId
       )
     );
-  }
-
-  function calculateAge(date: string | null) {
-    if (!date) return null;
-
-    const birthDate = new Date(date);
-    const today = new Date();
-
-    let age =
-      today.getFullYear() -
-      birthDate.getFullYear();
-
-    const monthDifference =
-      today.getMonth() -
-      birthDate.getMonth();
-
-    if (
-      monthDifference < 0 ||
-      (monthDifference === 0 &&
-        today.getDate() < birthDate.getDate())
-    ) {
-      age--;
-    }
-
-    return age;
   }
 
   if (loading) {
@@ -239,9 +191,7 @@ export default function ShortlistPage() {
         </a>
 
         <div className="dashboard-user">
-          <a href="/players">
-            ← Database
-          </a>
+          <a href="/players">Giocatori</a>
 
           <button
             type="button"
@@ -256,24 +206,29 @@ export default function ShortlistPage() {
       </header>
 
       <section className="dashboard-content">
-        <div className="dashboard-section-header">
-          <div>
-            <span>SCOUTING</span>
+        <a
+          href="/dashboard"
+          className="player-back"
+        >
+          ← Dashboard
+        </a>
 
-            <h1>La mia shortlist</h1>
+        <div className="dashboard-card">
+          <span>SHORTLIST</span>
 
-            <p>
-              I giocatori che hai salvato per il tuo
-              scouting.
-            </p>
-          </div>
+          <h1>La mia shortlist</h1>
 
-          <div className="shortlist-count">
+          <p>
+            I giocatori che hai salvato per il tuo
+            scouting.
+          </p>
+
+          <strong>
             {players.length}{" "}
             {players.length === 1
               ? "giocatore"
               : "giocatori"}
-          </div>
+          </strong>
         </div>
 
         {message && (
@@ -295,107 +250,54 @@ export default function ShortlistPage() {
               che vuoi tenere sotto osservazione.
             </p>
 
-            <button
-              type="button"
-              onClick={() =>
-                router.push("/players")
-              }
+            <a
+              href="/players"
+              className="player-edit-button"
             >
               Vai al database →
-            </button>
+            </a>
           </div>
         ) : (
-          <div className="players-grid">
-            {players.map((player) => {
-              const age = calculateAge(
-                player.birth_date
-              );
+          <div className="player-list">
+            {players.map((player) => (
+              <div
+                key={player.id}
+                className="dashboard-card"
+              >
+                <div className="player-card-header">
+                  <div>
+                    <span>
+                      {player.posizione ??
+                        player.ruolo ??
+                        "GIOCATORE"}
+                    </span>
 
-              return (
-                <div
-                  key={player.id}
-                  className="player-card"
-                >
-                  <div
-                    className="player-card-main"
-                    onClick={() =>
-                      router.push(
-                        "/players/" + player.id
-                      )
-                    }
-                  >
-                    <div className="player-card-top">
-                      <span>
-                        {player.primary_position ??
-                          "GIOCATORE"}
-                      </span>
-
+                    <h2>
+                      {player.nome ?? ""}{" "}
                       <strong>
-                        {player.first_name ?? ""}{" "}
-                        {player.last_name ?? ""}
+                        {player.cognome ?? ""}
                       </strong>
-                    </div>
-
-                    <div className="player-card-info">
-                      <div>
-                        <small>ETÀ</small>
-
-                        <strong>
-                          {age !== null
-                            ? age
-                            : "—"}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <small>ALTEZZA</small>
-
-                        <strong>
-                          {player.height_cm
-                            ? player.height_cm +
-                              " cm"
-                            : "—"}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <small>PIEDE</small>
-
-                        <strong>
-                          {player.preferred_foot ??
-                            "—"}
-                        </strong>
-                      </div>
-                    </div>
+                    </h2>
 
                     <p>
-                      {player.current_club ??
+                      {player.club ??
                         "Club non specificato"}
-
-                      {player.current_team_category
+                      {player.categoria
                         ? " · " +
-                          player.current_team_category
+                          player.categoria
                         : ""}
                     </p>
-
-                    {player.city && (
-                      <small>
-                        📍 {player.city}
-                      </small>
-                    )}
                   </div>
 
-                  <div className="player-card-actions">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        router.push(
-                          "/players/" + player.id
-                        )
+                  <div>
+                    <a
+                      href={
+                        "/players/" + player.id
                       }
+                      className="player-edit-button"
                     >
-                      Vedi profilo
-                    </button>
+                      Vedi profilo →
+                    </a>
 
                     <button
                       type="button"
@@ -404,13 +306,14 @@ export default function ShortlistPage() {
                           player.id
                         )
                       }
+                      className="player-shortlist-button"
                     >
                       Rimuovi
                     </button>
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </section>
