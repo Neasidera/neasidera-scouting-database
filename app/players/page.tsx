@@ -1,23 +1,29 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 type Player = {
   id: string;
-  nome: string | null;
-  cognome: string | null;
-  data_nascita: string | null;
-  altezza: number | null;
-  piede: string | null;
-  ruolo: string | null;
-  posizione: string | null;
-  club: string | null;
-  categoria: string | null;
-  provincia: string | null;
-  video: string | null;
-  bio: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  height_cm: number | null;
+  preferred_foot: string | null;
+  primary_position: string | null;
+  current_club: string | null;
+  current_team_category: string | null;
+  city: string | null;
+  visibility: string | null;
 };
+
+const PAGE_SIZE = 50;
+
+function footLabel(foot: string | null) {
+  if (foot === "right") return "Destro";
+  if (foot === "left") return "Sinistro";
+  if (foot === "both") return "Ambidestro";
+  return foot || "—";
+}
 
 export default function PlayersPage() {
   const supabase = createClient();
@@ -30,11 +36,16 @@ export default function PlayersPage() {
   const [ruolo, setRuolo] = useState("");
   const [piede, setPiede] = useState("");
   const [categoria, setCategoria] = useState("");
-  const [provincia, setProvincia] = useState("");
+  const [citta, setCitta] = useState("");
   const [club, setClub] = useState("");
 
   useEffect(() => {
-    async function loadPlayers() {
+    let cancelled = false;
+
+    const timeout = window.setTimeout(async () => {
+      setLoading(true);
+      setMessage("");
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -44,86 +55,82 @@ export default function PlayersPage() {
         return;
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from("players")
         .select(
-          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, bio"
+          "id, first_name, last_name, height_cm, preferred_foot, primary_position, current_club, current_team_category, city, visibility"
         )
-        .eq("visibile", true)
-        .order("created_at", { ascending: false });
+        .eq("visibility", "public")
+        .order("created_at", { ascending: false })
+        .range(0, PAGE_SIZE - 1);
+
+      if (search.trim()) {
+        const term = search.trim().replace(/,/g, " ");
+
+        query = query.or(
+          "first_name.ilike.%" +
+            term +
+            "%,last_name.ilike.%" +
+            term +
+            "%,current_club.ilike.%" +
+            term +
+            "%,primary_position.ilike.%" +
+            term +
+            "%,city.ilike.%" +
+            term +
+            "%"
+        );
+      }
+
+      if (ruolo) {
+        query = query.eq("primary_position", ruolo);
+      }
+
+      if (piede) {
+        query = query.eq("preferred_foot", piede);
+      }
+
+      if (categoria.trim()) {
+        query = query.ilike(
+          "current_team_category",
+          "%" + categoria.trim() + "%"
+        );
+      }
+
+      if (citta.trim()) {
+        query = query.ilike("city", "%" + citta.trim() + "%");
+      }
+
+      if (club.trim()) {
+        query = query.ilike("current_club", "%" + club.trim() + "%");
+      }
+
+      const { data, error } = await query;
+
+      if (cancelled) return;
 
       if (error) {
-        setMessage(error.message);
+        setMessage("Errore caricamento giocatori: " + error.message);
+        setPlayers([]);
       } else {
-        setPlayers(data ?? []);
+        setPlayers(data || []);
       }
 
       setLoading(false);
-    }
+    }, 300);
 
-    loadPlayers();
-  }, [supabase]);
-
-  const filteredPlayers = useMemo(() => {
-    return players.filter((player) => {
-      const searchText = search.toLowerCase();
-
-      const fullName =
-        `${player.nome ?? ""} ${player.cognome ?? ""}`.toLowerCase();
-
-      const searchMatch =
-        !searchText ||
-        fullName.includes(searchText) ||
-        (player.club ?? "").toLowerCase().includes(searchText) ||
-        (player.posizione ?? "").toLowerCase().includes(searchText);
-
-      const ruoloMatch = !ruolo || player.ruolo === ruolo;
-
-      const piedeMatch = !piede || player.piede === piede;
-
-      const categoriaMatch =
-        !categoria ||
-        (player.categoria ?? "")
-          .toLowerCase()
-          .includes(categoria.toLowerCase());
-
-      const provinciaMatch =
-        !provincia ||
-        (player.provincia ?? "")
-          .toLowerCase()
-          .includes(provincia.toLowerCase());
-
-      const clubMatch =
-        !club ||
-        (player.club ?? "")
-          .toLowerCase()
-          .includes(club.toLowerCase());
-
-      return (
-        searchMatch &&
-        ruoloMatch &&
-        piedeMatch &&
-        categoriaMatch &&
-        provinciaMatch &&
-        clubMatch
-      );
-    });
-  }, [
-    players,
-    search,
-    ruolo,
-    piede,
-    categoria,
-    provincia,
-    club,
-  ]);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+    };
+  }, [search, ruolo, piede, categoria, citta, club, supabase]);
 
   function resetFilters() {
     setSearch("");
     setRuolo("");
     setPiede("");
     setCategoria("");
-    setProvincia("");
+    setCitta("");
     setClub("");
   }
 
@@ -148,6 +155,7 @@ export default function PlayersPage() {
           <a href="/players/new">+ Nuovo giocatore</a>
 
           <button
+            type="button"
             onClick={async () => {
               await supabase.auth.signOut();
               window.location.href = "/login";
@@ -179,7 +187,7 @@ export default function PlayersPage() {
             <input
               id="search"
               type="text"
-              placeholder="Nome, cognome, club o posizione..."
+              placeholder="Nome, cognome, club, posizione o città..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -197,9 +205,7 @@ export default function PlayersPage() {
                 <option value="">Tutti i ruoli</option>
                 <option value="Portiere">Portiere</option>
                 <option value="Difensore">Difensore</option>
-                <option value="Centrocampista">
-                  Centrocampista
-                </option>
+                <option value="Centrocampista">Centrocampista</option>
                 <option value="Attaccante">Attaccante</option>
               </select>
             </div>
@@ -213,9 +219,9 @@ export default function PlayersPage() {
                 onChange={(event) => setPiede(event.target.value)}
               >
                 <option value="">Tutti</option>
-                <option value="Destro">Destro</option>
-                <option value="Sinistro">Sinistro</option>
-                <option value="Ambidestro">Ambidestro</option>
+                <option value="right">Destro</option>
+                <option value="left">Sinistro</option>
+                <option value="both">Ambidestro</option>
               </select>
             </div>
 
@@ -227,23 +233,19 @@ export default function PlayersPage() {
                 type="text"
                 placeholder="Es. U17, U19..."
                 value={categoria}
-                onChange={(event) =>
-                  setCategoria(event.target.value)
-                }
+                onChange={(event) => setCategoria(event.target.value)}
               />
             </div>
 
             <div className="profile-field">
-              <label htmlFor="provincia">Provincia</label>
+              <label htmlFor="citta">Città</label>
 
               <input
-                id="provincia"
+                id="citta"
                 type="text"
-                placeholder="Es. Milano"
-                value={provincia}
-                onChange={(event) =>
-                  setProvincia(event.target.value)
-                }
+                placeholder="Es. Milano..."
+                value={citta}
+                onChange={(event) => setCitta(event.target.value)}
               />
             </div>
 
@@ -271,16 +273,19 @@ export default function PlayersPage() {
 
         <div className="players-results-header">
           <span>
-            {filteredPlayers.length}{" "}
-            {filteredPlayers.length === 1
-              ? "giocatore trovato"
-              : "giocatori trovati"}
+            {players.length === PAGE_SIZE
+              ? "50+ giocatori"
+              : players.length +
+                " " +
+                (players.length === 1
+                  ? "giocatore trovato"
+                  : "giocatori trovati")}
           </span>
         </div>
 
         {message && <p className="auth-message">{message}</p>}
 
-        {filteredPlayers.length === 0 ? (
+        {players.length === 0 ? (
           <div className="dashboard-card">
             <span>NESSUN RISULTATO</span>
 
@@ -292,39 +297,42 @@ export default function PlayersPage() {
           </div>
         ) : (
           <div className="dashboard-grid">
-            {filteredPlayers.map((player) => (
-              <div
+            {players.map((player) => (
+              <a
                 className="dashboard-card"
                 key={player.id}
-                onClick={() => {
-                  window.location.href = `/players/${player.id}`;
-                }}
-                style={{ cursor: "pointer" }}
+                href={"/players/" + player.id}
               >
-                <span>{player.ruolo ?? "GIOCATORE"}</span>
+                <span>
+                  {player.primary_position || "GIOCATORE"}
+                </span>
 
                 <h2>
-                  {player.nome ?? ""} {player.cognome ?? ""}
+                  {player.first_name || ""}{" "}
+                  {player.last_name || ""}
                 </h2>
 
                 <p>
-                  {player.club ?? "Club non specificato"}
+                  {player.current_club ||
+                    "Club non specificato"}
                 </p>
 
                 <p>
-                  {player.altezza
-                    ? `${player.altezza} cm`
+                  {player.height_cm
+                    ? player.height_cm + " cm"
                     : "Altezza non specificata"}
                   {" · "}
-                  {player.piede ?? "Piede non specificato"}
+                  {footLabel(player.preferred_foot)}
                 </p>
 
-                {player.posizione && (
-                  <p>{player.posizione}</p>
-                )}
+                <p>
+                  {player.current_team_category ||
+                    "Categoria non specificata"}
+                  {player.city ? " · " + player.city : ""}
+                </p>
 
                 <strong>→</strong>
-              </div>
+              </a>
             ))}
           </div>
         )}
