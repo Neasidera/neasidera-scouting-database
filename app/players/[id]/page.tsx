@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import styles from "./player-detail.module.css";
 
 type Player = {
   id: string;
@@ -233,11 +234,21 @@ export default function PlayerDetailPage() {
     return new Date(date).toLocaleDateString("it-IT");
   }
 
+  function formatFoot(foot: string | null) {
+    if (!foot) return "—";
+    if (foot === "right") return "Destro";
+    if (foot === "left") return "Sinistro";
+    if (foot === "both") return "Ambidestro";
+
+    return foot;
+  }
+
   if (loading) {
     return (
-      <main className="dashboard-page">
-        <div className="dashboard-loading">
-          Caricamento profilo...
+      <main className={styles.page}>
+        <div className={styles.loading}>
+          <span>NEASIDERA SCOUTING</span>
+          <p>Caricamento profilo...</p>
         </div>
       </main>
     );
@@ -245,17 +256,16 @@ export default function PlayerDetailPage() {
 
   if (!player) {
     return (
-      <main className="dashboard-page">
-        <header className="dashboard-header">
-          <a href="/dashboard" className="dashboard-logo">
-            NEASIDERA
-            <span>SCOUTING</span>
+      <main className={styles.page}>
+        <header className={styles.header}>
+          <a href="/dashboard" className={styles.logo}>
+            NEASIDERA<span>SCOUTING</span>
           </a>
         </header>
 
-        <section className="dashboard-content">
-          <div className="dashboard-card">
-            <span>ERRORE</span>
+        <section className={styles.content}>
+          <div className={styles.errorCard}>
+            <span className={styles.sectionLabel}>ERRORE</span>
 
             <h2>
               {message || "Giocatore non trovato."}
@@ -263,6 +273,7 @@ export default function PlayerDetailPage() {
 
             <button
               type="button"
+              className={styles.secondaryButton}
               onClick={() => router.push("/players")}
             >
               ← Torna ai giocatori
@@ -276,16 +287,19 @@ export default function PlayerDetailPage() {
   const age = calculateAge(player.data_nascita);
   const isOwner = currentUserId === player.user_id;
 
+  const fullName =
+    `${player.nome ?? ""} ${player.cognome ?? ""}`.trim() ||
+    "Giocatore";
+
   return (
-    <main className="dashboard-page">
-      <header className="dashboard-header">
-        <a href="/dashboard" className="dashboard-logo">
-          NEASIDERA
-          <span>SCOUTING</span>
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <a href="/dashboard" className={styles.logo}>
+          NEASIDERA<span>SCOUTING</span>
         </a>
 
-        <div className="dashboard-user">
-          <a href="/players">← Giocatori</a>
+        <div className={styles.headerActions}>
+          <a href="/players">← Database</a>
 
           <button
             type="button"
@@ -299,34 +313,48 @@ export default function PlayerDetailPage() {
         </div>
       </header>
 
-      <section className="dashboard-content">
-        <a href="/players" className="player-back">
+      <section className={styles.content}>
+        <a href="/players" className={styles.backLink}>
           ← Torna al database
         </a>
 
-        <div className="player-detail-header">
-          <div>
-            <span>
-              {player.posizione ?? player.ruolo ?? "GIOCATORE"}
+        <section className={styles.profileHero}>
+          <div className={styles.heroMain}>
+            <span className={styles.positionBadge}>
+              {player.posizione ??
+                player.ruolo ??
+                "GIOCATORE"}
             </span>
 
             <h1>
-              {player.nome ?? ""}{" "}
-              <strong>{player.cognome ?? ""}</strong>
+              {player.nome ?? ""}
+              <strong>
+                {player.cognome ?? ""}
+              </strong>
             </h1>
 
-            <p>
+            <p className={styles.heroMeta}>
               {player.club ?? "Club non specificato"}
               {player.categoria
-                ? " · " + player.categoria
+                ? ` · ${player.categoria}`
                 : ""}
             </p>
+
+            {player.provincia && (
+              <p className={styles.heroProvince}>
+                {player.provincia}
+              </p>
+            )}
           </div>
 
-          <div className="player-detail-actions">
+          <div className={styles.heroActions}>
             <button
               type="button"
-              className="player-shortlist-button"
+              className={`${styles.shortlistButton} ${
+                isShortlisted
+                  ? styles.shortlisted
+                  : ""
+              }`}
               onClick={toggleShortlist}
               disabled={shortlistLoading}
             >
@@ -339,130 +367,172 @@ export default function PlayerDetailPage() {
 
             {isOwner && (
               <a
-                href={"/players/" + player.id + "/edit"}
-                className="player-edit-button"
+                href={`/players/${player.id}/edit`}
+                className={styles.editButton}
               >
                 ✏️ Modifica giocatore
               </a>
             )}
           </div>
-        </div>
+        </section>
 
         {message && (
-          <p className="auth-message">
+          <div className={styles.message}>
             {message}
-          </p>
+          </div>
         )}
 
-        <div className="player-detail-grid">
-          <div className="dashboard-card">
-            <span>DATI ANAGRAFICI</span>
+        <div className={styles.sectionGrid}>
+          <section className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.sectionLabel}>
+                DATI FISICI
+              </span>
+              <h2>Informazioni</h2>
+            </div>
 
-            <h2>Informazioni</h2>
-
-            <div className="player-info-list">
-              <div>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
                 <small>Data di nascita</small>
                 <strong>
                   {formatDate(player.data_nascita)}
                 </strong>
               </div>
 
-              <div>
+              <div className={styles.infoItem}>
                 <small>Età</small>
                 <strong>
-                  {age !== null ? age + " anni" : "—"}
-                </strong>
-              </div>
-
-              <div>
-                <small>Altezza</small>
-                <strong>
-                  {player.altezza
-                    ? player.altezza + " cm"
+                  {age !== null
+                    ? `${age} anni`
                     : "—"}
                 </strong>
               </div>
 
-              <div>
-                <small>Piede</small>
+              <div className={styles.infoItem}>
+                <small>Altezza</small>
                 <strong>
-                  {player.piede ?? "—"}
+                  {player.altezza
+                    ? `${player.altezza} cm`
+                    : "—"}
                 </strong>
               </div>
 
-              <div>
+              <div className={styles.infoItem}>
+                <small>Piede</small>
+                <strong>
+                  {formatFoot(player.piede)}
+                </strong>
+              </div>
+
+              <div className={styles.infoItem}>
                 <small>Provincia</small>
                 <strong>
                   {player.provincia ?? "—"}
                 </strong>
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="dashboard-card">
-            <span>PROFILO CALCISTICO</span>
+          <section className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.sectionLabel}>
+                PROFILO CALCISTICO
+              </span>
+              <h2>Caratteristiche</h2>
+            </div>
 
-            <h2>Caratteristiche</h2>
-
-            <div className="player-info-list">
-              <div>
+            <div className={styles.infoGrid}>
+              <div className={styles.infoItem}>
                 <small>Ruolo</small>
                 <strong>
                   {player.ruolo ?? "—"}
                 </strong>
               </div>
 
-              <div>
+              <div className={styles.infoItem}>
                 <small>Posizione</small>
                 <strong>
                   {player.posizione ?? "—"}
                 </strong>
               </div>
 
-              <div>
+              <div className={styles.infoItem}>
                 <small>Club</small>
                 <strong>
                   {player.club ?? "—"}
                 </strong>
               </div>
 
-              <div>
+              <div className={styles.infoItem}>
                 <small>Categoria</small>
                 <strong>
                   {player.categoria ?? "—"}
                 </strong>
               </div>
             </div>
+          </section>
+        </div>
+
+        <section className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={styles.sectionLabel}>
+              REPORT
+            </span>
+            <h2>Descrizione</h2>
           </div>
-        </div>
 
-        <div className="dashboard-card player-bio-card">
-          <span>REPORT</span>
+          <div className={styles.bio}>
+            {player.bio ? (
+              <p>{player.bio}</p>
+            ) : (
+              <p className={styles.empty}>
+                Nessuna descrizione disponibile
+                per questo giocatore.
+              </p>
+            )}
+          </div>
+        </section>
 
-          <h2>Descrizione</h2>
-
-          <p>
-            {player.bio ||
-              "Nessuna descrizione disponibile per questo giocatore."}
-          </p>
-        </div>
-
-        {player.video && (
-          <div className="dashboard-card player-bio-card">
-            <span>VIDEO</span>
-
+        <section className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={styles.sectionLabel}>
+              VIDEO
+            </span>
             <h2>Video del giocatore</h2>
+          </div>
 
+          {player.video ? (
             <a
               href={player.video}
               target="_blank"
               rel="noopener noreferrer"
+              className={styles.videoButton}
             >
-              Guarda il video →
+              <span className={styles.playIcon}>
+                ▶
+              </span>
+
+              <span>
+                <strong>Guarda il video</strong>
+                <small>
+                  Apri il video del giocatore
+                </small>
+              </span>
+
+              <span className={styles.videoArrow}>
+                →
+              </span>
             </a>
-          </div>
-        )}
+          ) : (
+            <div className={styles.emptyVideo}>
+              <span>VIDEO NON DISPONIBILE</span>
+              <p>
+                Questo giocatore non ha ancora
+                inserito un video.
+              </p>
+            </div>
+          )}
+        </section>
       </section>
     </main>
   );
