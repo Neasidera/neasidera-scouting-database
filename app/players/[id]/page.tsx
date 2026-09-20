@@ -1,3 +1,4 @@
+```tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,15 +8,17 @@ import { createClient } from "@/lib/supabase/client";
 type Player = {
   id: string;
   user_id: string;
-  first_name: string | null;
-  last_name: string | null;
-  birth_date: string | null;
-  height_cm: number | null;
-  preferred_foot: string | null;
-  primary_position: string | null;
-  current_club: string | null;
-  current_team_category: string | null;
-  city: string | null;
+  nome: string | null;
+  cognome: string | null;
+  "data nascita": string | null;
+  altezza: number | null;
+  piede: string | null;
+  ruolo: string | null;
+  posizione: string | null;
+  club: string | null;
+  categoria: string | null;
+  provincia: string | null;
+  video: string | null;
   bio: string | null;
 };
 
@@ -53,7 +56,7 @@ export default function PlayerDetailPage() {
       const { data, error } = await supabase
         .from("players")
         .select(
-          "id, user_id, first_name, last_name, birth_date, height_cm, preferred_foot, primary_position, current_club, current_team_category, city, bio"
+          'id, user_id, nome, cognome, "data nascita", altezza, piede, ruolo, posizione, club, categoria, provincia, video, bio'
         )
         .eq("id", playerId)
         .single();
@@ -131,8 +134,7 @@ export default function PlayerDetailPage() {
 
       if (shortlistError) {
         setMessage(
-          "Errore caricamento shortlist: " +
-            shortlistError.message
+          "Errore caricamento shortlist: " + shortlistError.message
         );
         setShortlistLoading(false);
         return;
@@ -177,9 +179,7 @@ export default function PlayerDetailPage() {
         .eq("player_id", player.id);
 
       if (error) {
-        setMessage(
-          "Errore nella rimozione: " + error.message
-        );
+        setMessage("Errore nella rimozione: " + error.message);
       } else {
         setIsShortlisted(false);
       }
@@ -192,9 +192,7 @@ export default function PlayerDetailPage() {
         });
 
       if (error) {
-        setMessage(
-          "Errore nell'aggiunta: " + error.message
-        );
+        setMessage("Errore nell'aggiunta: " + error.message);
       } else {
         setIsShortlisted(true);
       }
@@ -274,7 +272,7 @@ export default function PlayerDetailPage() {
     );
   }
 
-  const age = calculateAge(player.birth_date);
+  const age = calculateAge(player["data nascita"]);
   const isOwner = currentUserId === player.user_id;
 
   return (
@@ -308,18 +306,18 @@ export default function PlayerDetailPage() {
         <div className="player-detail-header">
           <div>
             <span>
-              {player.primary_position ?? "GIOCATORE"}
+              {player.posizione ?? player.ruolo ?? "GIOCATORE"}
             </span>
 
             <h1>
-              {player.first_name ?? ""}{" "}
-              <strong>{player.last_name ?? ""}</strong>
+              {player.nome ?? ""}{" "}
+              <strong>{player.cognome ?? ""}</strong>
             </h1>
 
             <p>
-              {player.current_club ?? "Club non specificato"}
-              {player.current_team_category
-                ? " · " + player.current_team_category
+              {player.club ?? "Club non specificato"}
+              {player.categoria
+                ? " · " + player.categoria
                 : ""}
             </p>
           </div>
@@ -364,7 +362,9 @@ export default function PlayerDetailPage() {
             <div className="player-info-list">
               <div>
                 <small>Data di nascita</small>
-                <strong>{formatDate(player.birth_date)}</strong>
+                <strong>
+                  {formatDate(player["data nascita"])}
+                </strong>
               </div>
 
               <div>
@@ -377,8 +377,8 @@ export default function PlayerDetailPage() {
               <div>
                 <small>Altezza</small>
                 <strong>
-                  {player.height_cm
-                    ? player.height_cm + " cm"
+                  {player.altezza
+                    ? player.altezza + " cm"
                     : "—"}
                 </strong>
               </div>
@@ -386,13 +386,15 @@ export default function PlayerDetailPage() {
               <div>
                 <small>Piede</small>
                 <strong>
-                  {player.preferred_foot ?? "—"}
+                  {player.piede ?? "—"}
                 </strong>
               </div>
 
               <div>
-                <small>Città</small>
-                <strong>{player.city ?? "—"}</strong>
+                <small>Provincia</small>
+                <strong>
+                  {player.provincia ?? "—"}
+                </strong>
               </div>
             </div>
           </div>
@@ -404,23 +406,30 @@ export default function PlayerDetailPage() {
 
             <div className="player-info-list">
               <div>
+                <small>Ruolo</small>
+                <strong>
+                  {player.ruolo ?? "—"}
+                </strong>
+              </div>
+
+              <div>
                 <small>Posizione</small>
                 <strong>
-                  {player.primary_position ?? "—"}
+                  {player.posizione ?? "—"}
                 </strong>
               </div>
 
               <div>
                 <small>Club</small>
                 <strong>
-                  {player.current_club ?? "—"}
+                  {player.club ?? "—"}
                 </strong>
               </div>
 
               <div>
                 <small>Categoria</small>
                 <strong>
-                  {player.current_team_category ?? "—"}
+                  {player.categoria ?? "—"}
                 </strong>
               </div>
             </div>
@@ -437,7 +446,24 @@ export default function PlayerDetailPage() {
               "Nessuna descrizione disponibile per questo giocatore."}
           </p>
         </div>
+
+        {player.video && (
+          <div className="dashboard-card player-bio-card">
+            <span>VIDEO</span>
+
+            <h2>Video del giocatore</h2>
+
+            <a
+              href={player.video}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Guarda il video →
+            </a>
+          </div>
+        )}
       </section>
     </main>
   );
 }
+```
