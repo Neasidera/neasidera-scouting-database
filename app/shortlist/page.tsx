@@ -42,15 +42,14 @@ export default function ShortlistPage() {
         return;
       }
 
-      const {
-        data: shortlist,
-        error: shortlistError,
-      } = await supabase
-        .from("shortlists")
-        .select("id, name, description")
-        .eq("user_id", user.id)
-        .limit(1)
-        .maybeSingle();
+      const { data: shortlist, error: shortlistError } =
+        await supabase
+          .from("shortlists")
+          .select("id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
 
       if (shortlistError) {
         setMessage(
@@ -114,14 +113,29 @@ export default function ShortlistPage() {
         return;
       }
 
-      setPlayers(playerData ?? []);
+      const orderedPlayers = playerIds
+        .map((id) =>
+          playerData?.find(
+            (player) => player.id === id
+          )
+        )
+        .filter(
+          (player): player is Player =>
+            Boolean(player)
+        );
+
+      setPlayers(orderedPlayers);
       setLoading(false);
     }
 
     loadShortlist();
   }, [router]);
 
-  async function removeFromShortlist(playerId: string) {
+  async function removeFromShortlist(
+    playerId: string
+  ) {
+    setMessage("");
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -138,12 +152,14 @@ export default function ShortlistPage() {
       .from("shortlists")
       .select("id")
       .eq("user_id", user.id)
+      .order("created_at", { ascending: true })
       .limit(1)
       .maybeSingle();
 
     if (shortlistError || !shortlist) {
       setMessage(
-        "Impossibile trovare la shortlist."
+        shortlistError?.message ||
+          "Impossibile trovare la shortlist."
       );
       return;
     }
@@ -169,6 +185,34 @@ export default function ShortlistPage() {
     );
   }
 
+  function calculateAge(
+    date: string | null
+  ) {
+    if (!date) return null;
+
+    const birthDate = new Date(date);
+    const today = new Date();
+
+    let age =
+      today.getFullYear() -
+      birthDate.getFullYear();
+
+    const monthDifference =
+      today.getMonth() -
+      birthDate.getMonth();
+
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 &&
+        today.getDate() <
+          birthDate.getDate())
+    ) {
+      age--;
+    }
+
+    return age;
+  }
+
   if (loading) {
     return (
       <main className="dashboard-page">
@@ -191,13 +235,16 @@ export default function ShortlistPage() {
         </a>
 
         <div className="dashboard-user">
-          <a href="/players">Giocatori</a>
+          <a href="/players">
+            ← Giocatori
+          </a>
 
           <button
             type="button"
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href = "/login";
+              window.location.href =
+                "/login";
             }}
           >
             Esci
@@ -219,8 +266,8 @@ export default function ShortlistPage() {
           <h1>La mia shortlist</h1>
 
           <p>
-            I giocatori che hai salvato per il tuo
-            scouting.
+            I giocatori che hai salvato per il
+            tuo scouting.
           </p>
 
           <strong>
@@ -246,8 +293,9 @@ export default function ShortlistPage() {
             </h2>
 
             <p>
-              Vai nel database e aggiungi i profili
-              che vuoi tenere sotto osservazione.
+              Vai nel database e aggiungi i
+              profili che vuoi tenere sotto
+              osservazione.
             </p>
 
             <a
@@ -259,61 +307,90 @@ export default function ShortlistPage() {
           </div>
         ) : (
           <div className="player-list">
-            {players.map((player) => (
-              <div
-                key={player.id}
-                className="dashboard-card"
-              >
-                <div className="player-card-header">
-                  <div>
-                    <span>
-                      {player.posizione ??
-                        player.ruolo ??
-                        "GIOCATORE"}
-                    </span>
+            {players.map((player) => {
+              const age = calculateAge(
+                player.data_nascita
+              );
 
-                    <h2>
-                      {player.nome ?? ""}{" "}
-                      <strong>
-                        {player.cognome ?? ""}
-                      </strong>
-                    </h2>
+              return (
+                <div
+                  key={player.id}
+                  className="dashboard-card"
+                >
+                  <div className="player-card-header">
+                    <div>
+                      <span>
+                        {player.posizione ??
+                          player.ruolo ??
+                          "GIOCATORE"}
+                      </span>
 
-                    <p>
-                      {player.club ??
-                        "Club non specificato"}
-                      {player.categoria
-                        ? " · " +
-                          player.categoria
-                        : ""}
-                    </p>
-                  </div>
+                      <h2>
+                        {player.nome ?? ""}{" "}
+                        <strong>
+                          {player.cognome ?? ""}
+                        </strong>
+                      </h2>
 
-                  <div>
-                    <a
-                      href={
-                        "/players/" + player.id
-                      }
-                      className="player-edit-button"
-                    >
-                      Vedi profilo →
-                    </a>
+                      <p>
+                        {player.club ??
+                          "Club non specificato"}
+                        {player.categoria
+                          ? " · " +
+                            player.categoria
+                          : ""}
+                      </p>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        removeFromShortlist(
+                      <p>
+                        {age !== null
+                          ? age + " anni"
+                          : "Età non disponibile"}
+                        {player.altezza
+                          ? " · " +
+                            player.altezza +
+                            " cm"
+                          : ""}
+                        {player.piede
+                          ? " · " +
+                            player.piede
+                          : ""}
+                      </p>
+
+                      {player.provincia && (
+                        <small>
+                          📍{" "}
+                          {player.provincia}
+                        </small>
+                      )}
+                    </div>
+
+                    <div>
+                      <a
+                        href={
+                          "/players/" +
                           player.id
-                        )
-                      }
-                      className="player-shortlist-button"
-                    >
-                      Rimuovi
-                    </button>
+                        }
+                        className="player-edit-button"
+                      >
+                        Vedi profilo →
+                      </a>
+
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removeFromShortlist(
+                            player.id
+                          )
+                        }
+                        className="player-shortlist-button"
+                      >
+                        Rimuovi
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>
