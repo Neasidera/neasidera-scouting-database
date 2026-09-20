@@ -68,17 +68,7 @@ export default function PlayersPage() {
         const term = search.trim().replace(/,/g, " ");
 
         query = query.or(
-          "nome.ilike.%" +
-            term +
-            "%,cognome.ilike.%" +
-            term +
-            "%,club.ilike.%" +
-            term +
-            "%,ruolo.ilike.%" +
-            term +
-            "%,provincia.ilike.%" +
-            term +
-            "%"
+          `nome.ilike.%${term}%,cognome.ilike.%${term}%,club.ilike.%${term}%,ruolo.ilike.%${term}%,provincia.ilike.%${term}%`
         );
       }
 
@@ -93,21 +83,21 @@ export default function PlayersPage() {
       if (categoria.trim()) {
         query = query.ilike(
           "categoria",
-          "%" + categoria.trim() + "%"
+          `%${categoria.trim()}%`
         );
       }
 
       if (provincia.trim()) {
         query = query.ilike(
           "provincia",
-          "%" + provincia.trim() + "%"
+          `%${provincia.trim()}%`
         );
       }
 
       if (club.trim()) {
         query = query.ilike(
           "club",
-          "%" + club.trim() + "%"
+          `%${club.trim()}%`
         );
       }
 
@@ -261,4 +251,105 @@ export default function PlayersPage() {
               <input
                 id="provincia"
                 type="text"
-                pl
+                placeholder="Es. Milano..."
+                value={provincia}
+                onChange={(event) =>
+                  setProvincia(event.target.value)
+                }
+              />
+            </div>
+
+            <div className="profile-field">
+              <label htmlFor="club">Club</label>
+
+              <input
+                id="club"
+                type="text"
+                placeholder="Nome club..."
+                value={club}
+                onChange={(event) => setClub(event.target.value)}
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="filter-reset"
+            onClick={resetFilters}
+          >
+            Azzera filtri
+          </button>
+        </div>
+
+        <div className="players-results-header">
+          <span>
+            {players.length === PAGE_SIZE
+              ? "50+ giocatori"
+              : `${players.length} ${
+                  players.length === 1
+                    ? "giocatore trovato"
+                    : "giocatori trovati"
+                }`}
+          </span>
+        </div>
+
+        {message && (
+          <p className="auth-message">{message}</p>
+        )}
+
+        {players.length === 0 ? (
+          <div className="dashboard-card">
+            <span>NESSUN RISULTATO</span>
+
+            <h2>Nessun giocatore trovato.</h2>
+
+            <p>
+              Prova a modificare o rimuovere i filtri di ricerca.
+            </p>
+          </div>
+        ) : (
+          <div className="dashboard-grid">
+            {players.map((player) => (
+              <a
+                className="dashboard-card"
+                key={player.id}
+                href={`/players/${player.id}`}
+              >
+                <span>
+                  {player.ruolo || "GIOCATORE"}
+                </span>
+
+                <h2>
+                  {player.nome || ""}{" "}
+                  {player.cognome || ""}
+                </h2>
+
+                <p>
+                  {player.club || "Club non specificato"}
+                </p>
+
+                <p>
+                  {player.altezza
+                    ? `${player.altezza} cm`
+                    : "Altezza non specificata"}
+                  {" · "}
+                  {footLabel(player.piede)}
+                </p>
+
+                <p>
+                  {player.categoria ||
+                    "Categoria non specificata"}
+                  {player.provincia
+                    ? ` · ${player.provincia}`
+                    : ""}
+                </p>
+
+                <strong>→</strong>
+              </a>
+            ))}
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}
