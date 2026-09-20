@@ -64,23 +64,33 @@ export default function PlayersPage() {
         .order("created_at", { ascending: false })
         .range(0, PAGE_SIZE - 1);
 
-      if (search.trim()) {
-        const term = search.trim().replace(/,/g, " ");
+     if (search.trim()) {
+  const tokens = search
+    .trim()
+    .replace(/[,]+/g, " ")
+    .split(/\s+/)
+    .map((token) => token.replace(/[()]/g, ""))
+    .filter(Boolean)
+    .slice(0, 5);
 
-        query = query.or(
-          "first_name.ilike.%" +
-            term +
-            "%,last_name.ilike.%" +
-            term +
-            "%,current_club.ilike.%" +
-            term +
-            "%,primary_position.ilike.%" +
-            term +
-            "%,city.ilike.%" +
-            term +
-            "%"
-        );
-      }
+  for (const token of tokens) {
+    const escapedToken = token.replace(/[%_]/g, "\\$&");
+
+    query = query.or(
+      "first_name.ilike.%" +
+        escapedToken +
+        "%,last_name.ilike.%" +
+        escapedToken +
+        "%,current_club.ilike.%" +
+        escapedToken +
+        "%,primary_position.ilike.%" +
+        escapedToken +
+        "%,city.ilike.%" +
+        escapedToken +
+        "%"
+    );
+  }
+}
 
       if (ruolo) {
         query = query.eq("primary_position", ruolo);
