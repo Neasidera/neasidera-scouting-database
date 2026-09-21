@@ -22,6 +22,15 @@ type Player = {
   bio: string | null;
 };
 
+type ScoutNote = {
+  id: string;
+  user_id: string;
+  player_id: string;
+  note: string;
+  created_at: string;
+  updated_at: string;
+};
+
 export default function PlayerDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -34,6 +43,13 @@ export default function PlayerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [shortlistLoading, setShortlistLoading] = useState(false);
   const [message, setMessage] = useState("");
+
+  // NOTE SCOUT
+  const [notes, setNotes] = useState<ScoutNote[]>([]);
+  const [noteText, setNoteText] = useState("");
+  const [notesLoading, setNotesLoading] = useState(false);
+  const [noteSaving, setNoteSaving] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadPlayer() {
@@ -97,11 +113,169 @@ export default function PlayerDetailPage() {
         }
       }
 
+      // Carica solo le note dello scout attualmente loggato
+      await loadNotes(user.id, playerId);
+
       setLoading(false);
     }
 
     loadPlayer();
   }, [params.id, router]);
+
+  async function loadNotes(userId: string, playerId: string) {
+    setNotesLoading(true);
+
+    const { data, error } = await supabase
+      .from("scout_notes")
+      .select(
+        "id, user_id, player_id, note, created_at, updated_at"
+      )
+      .eq("user_id", userId)
+      .eq("player_id", playerId)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setNotes(data);
+    }
+
+    setNotesLoading(false);
+  }
+
+  async function saveNote() {
+    if (!player || !currentUserId) {
+      return;
+    }
+
+    const cleanedNote = noteText.trim();
+
+    if (!cleanedNote) {
+      setMessage("Scrivi una nota prima di salvarla.");
+      return;
+    }
+
+    setNoteSaving(true);
+    setMessage("");
+
+    if (editingNoteId) {
+      const { data, error } = await supabase
+        .from("scout_notes")
+        .update({
+          note: cleanedNote,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", editingNoteId)
+        .eq("user_id", currentUserId)
+        .select(
+          "id, user_id, player_id, note, created_at, updated_at"
+        )
+        .single();
+
+      if (error || !data) {
+        setMessage(
+          "Errore nella modifica della nota: " +
+            (error?.message || "errore sconosciuto")
+        );
+        setNoteSaving(false);
+        return;
+      }
+
+      setNotes((currentNotes) =>
+        currentNotes.map((existingNote) =>
+          existingNote.id === editingNoteId
+            ? data
+            : existingNote
+        )
+      );
+
+      setEditingNoteId(null);
+      setNoteText("");
+    } else {
+      const { data, error } = await supabase
+        .from("scout_notes")
+        .insert({
+          user_id: currentUserId,
+          player_id: player.id,
+          note: cleanedNote,
+        })
+        .select(
+          "id, user_id, player_id, note, created_at, updated_at"
+        )
+        .single();
+
+      if (error || !data) {
+        setMessage(
+          "Errore nel salvataggio della nota: " +
+            (error?.message || "errore sconosciuto")
+        );
+        setNoteSaving(false);
+        return;
+      }
+
+      setNotes((currentNotes) => [
+        data,
+        ...currentNotes,
+      ]);
+
+      setNoteText("");
+    }
+
+    setNoteSaving(false);
+  }
+
+  function startEditingNote(note: ScoutNote) {
+    setEditingNoteId(note.id);
+    setNoteText(note.note);
+
+    window.scrollTo({
+      top: document.body.scrollHeight,
+      behavior: "smooth",
+    });
+  }
+
+  function cancelEditingNote() {
+    setEditingNoteId(null);
+    setNoteText("");
+  }
+
+  async function deleteNote(noteId: string) {
+    if (!currentUserId) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Vuoi davvero eliminare questa nota?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setMessage("");
+
+    const { error } = await supabase
+      .from("scout_notes")
+      .delete()
+      .eq("id", noteId)
+      .eq("user_id", currentUserId);
+
+    if (error) {
+      setMessage(
+        "Errore nell'eliminazione della nota: " +
+          error.message
+      );
+      return;
+    }
+
+    setNotes((currentNotes) =>
+      currentNotes.filter(
+        (note) => note.id !== noteId
+      )
+    );
+
+    if (editingNoteId === noteId) {
+      cancelEditingNote();
+    }
+  }
 
   async function toggleShortlist() {
     if (!player || shortlistLoading) {
@@ -116,7 +290,9 @@ export default function PlayerDetailPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      setMessage("Sessione non valida. Effettua nuovamente il login.");
+      setMessage(
+        "Sessione non valida. Effettua nuovamente il login."
+      );
       setShortlistLoading(false);
       return;
     }
@@ -136,13 +312,15 @@ export default function PlayerDetailPage() {
 
       if (shortlistError) {
         setMessage(
-          "Errore caricamento shortlist: " + shortlistError.message
+          "Errore caricamento shortlist: " +
+            shortlistError.message
         );
         setShortlistLoading(false);
         return;
       }
 
-      currentShortlistId = existingShortlist?.id ?? null;
+      currentShortlistId =
+        existingShortlist?.id ?? null;
     }
 
     if (!currentShortlistId) {
@@ -154,7 +332,8 @@ export default function PlayerDetailPage() {
         .insert({
           user_id: user.id,
           name: "La mia shortlist",
-          description: "Giocatori salvati per lo scouting",
+          description:
+            "Giocatori salvati per lo scouting",
         })
         .select("id")
         .single();
@@ -181,7 +360,10 @@ export default function PlayerDetailPage() {
         .eq("player_id", player.id);
 
       if (error) {
-        setMessage("Errore nella rimozione: " + error.message);
+        setMessage(
+          "Errore nella rimozione: " +
+            error.message
+        );
       } else {
         setIsShortlisted(false);
       }
@@ -194,7 +376,10 @@ export default function PlayerDetailPage() {
         });
 
       if (error) {
-        setMessage("Errore nell'aggiunta: " + error.message);
+        setMessage(
+          "Errore nell'aggiunta: " +
+            error.message
+        );
       } else {
         setIsShortlisted(true);
       }
@@ -231,7 +416,9 @@ export default function PlayerDetailPage() {
   function formatDate(date: string | null) {
     if (!date) return "—";
 
-    return new Date(date).toLocaleDateString("it-IT");
+    return new Date(date).toLocaleDateString(
+      "it-IT"
+    );
   }
 
   function formatFoot(foot: string | null) {
@@ -241,6 +428,16 @@ export default function PlayerDetailPage() {
     if (foot === "both") return "Ambidestro";
 
     return foot;
+  }
+
+  function formatNoteDate(date: string) {
+    return new Date(date).toLocaleString("it-IT", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   if (loading) {
@@ -258,14 +455,19 @@ export default function PlayerDetailPage() {
     return (
       <main className={styles.page}>
         <header className={styles.header}>
-          <a href="/dashboard" className={styles.logo}>
+          <a
+            href="/dashboard"
+            className={styles.logo}
+          >
             NEASIDERA<span>SCOUTING</span>
           </a>
         </header>
 
         <section className={styles.content}>
           <div className={styles.errorCard}>
-            <span className={styles.sectionLabel}>ERRORE</span>
+            <span className={styles.sectionLabel}>
+              ERRORE
+            </span>
 
             <h2>
               {message || "Giocatore non trovato."}
@@ -287,14 +489,13 @@ export default function PlayerDetailPage() {
   const age = calculateAge(player.data_nascita);
   const isOwner = currentUserId === player.user_id;
 
-  const fullName =
-    `${player.nome ?? ""} ${player.cognome ?? ""}`.trim() ||
-    "Giocatore";
-
   return (
     <main className={styles.page}>
       <header className={styles.header}>
-        <a href="/dashboard" className={styles.logo}>
+        <a
+          href="/dashboard"
+          className={styles.logo}
+        >
           NEASIDERA<span>SCOUTING</span>
         </a>
 
@@ -314,7 +515,10 @@ export default function PlayerDetailPage() {
       </header>
 
       <section className={styles.content}>
-        <a href="/players" className={styles.backLink}>
+        <a
+          href="/players"
+          className={styles.backLink}
+        >
           ← Torna al database
         </a>
 
@@ -334,7 +538,8 @@ export default function PlayerDetailPage() {
             </h1>
 
             <p className={styles.heroMeta}>
-              {player.club ?? "Club non specificato"}
+              {player.club ??
+                "Club non specificato"}
               {player.categoria
                 ? ` · ${player.categoria}`
                 : ""}
@@ -395,7 +600,9 @@ export default function PlayerDetailPage() {
               <div className={styles.infoItem}>
                 <small>Data di nascita</small>
                 <strong>
-                  {formatDate(player.data_nascita)}
+                  {formatDate(
+                    player.data_nascita
+                  )}
                 </strong>
               </div>
 
@@ -532,6 +739,262 @@ export default function PlayerDetailPage() {
               </p>
             </div>
           )}
+        </section>
+
+        {/* ========================= */}
+        {/* NOTE SCOUT                 */}
+        {/* ========================= */}
+
+        <section className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={styles.sectionLabel}>
+              SCOUTING
+            </span>
+
+            <h2>Note personali</h2>
+
+            <p
+              style={{
+                marginTop: "8px",
+                marginBottom: 0,
+                fontSize: "14px",
+                opacity: 0.65,
+              }}
+            >
+              Le tue note sono private e
+              visibili solamente a te.
+            </p>
+          </div>
+
+          <div
+            style={{
+              marginTop: "24px",
+            }}
+          >
+            <textarea
+              value={noteText}
+              onChange={(event) =>
+                setNoteText(event.target.value)
+              }
+              placeholder="Scrivi qui le tue osservazioni sul giocatore..."
+              rows={5}
+              style={{
+                width: "100%",
+                boxSizing: "border-box",
+                resize: "vertical",
+                border: "1px solid rgba(0,0,0,0.14)",
+                borderRadius: "12px",
+                padding: "16px",
+                fontSize: "15px",
+                lineHeight: "1.5",
+                fontFamily: "inherit",
+                outline: "none",
+                background: "#fff",
+              }}
+            />
+
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                marginTop: "12px",
+                flexWrap: "wrap",
+              }}
+            >
+              <button
+                type="button"
+                className={styles.shortlistButton}
+                onClick={saveNote}
+                disabled={
+                  noteSaving ||
+                  !noteText.trim()
+                }
+              >
+                {noteSaving
+                  ? "Salvataggio..."
+                  : editingNoteId
+                  ? "Salva modifica"
+                  : "Salva nota"}
+              </button>
+
+              {editingNoteId && (
+                <button
+                  type="button"
+                  className={styles.secondaryButton}
+                  onClick={cancelEditingNote}
+                >
+                  Annulla
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: "32px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "16px",
+              }}
+            >
+              <strong
+                style={{
+                  fontSize: "14px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                }}
+              >
+                Le tue note
+              </strong>
+
+              <span
+                style={{
+                  fontSize: "13px",
+                  opacity: 0.6,
+                }}
+              >
+                {notes.length}{" "}
+                {notes.length === 1
+                  ? "nota"
+                  : "note"}
+              </span>
+            </div>
+
+            {notesLoading ? (
+              <p
+                style={{
+                  opacity: 0.6,
+                  margin: 0,
+                }}
+              >
+                Caricamento note...
+              </p>
+            ) : notes.length === 0 ? (
+              <div
+                style={{
+                  padding: "24px",
+                  borderRadius: "12px",
+                  background:
+                    "rgba(0,0,0,0.035)",
+                  textAlign: "center",
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    opacity: 0.6,
+                  }}
+                >
+                  Non hai ancora aggiunto
+                  note a questo giocatore.
+                </p>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                }}
+              >
+                {notes.map((note) => (
+                  <div
+                    key={note.id}
+                    style={{
+                      padding: "18px",
+                      borderRadius: "12px",
+                      border:
+                        "1px solid rgba(0,0,0,0.08)",
+                      background: "#fff",
+                    }}
+                  >
+                    <p
+                      style={{
+                        margin: "0 0 12px",
+                        whiteSpace: "pre-wrap",
+                        lineHeight: "1.6",
+                        fontSize: "15px",
+                      }}
+                    >
+                      {note.note}
+                    </p>
+
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent:
+                          "space-between",
+                        alignItems: "center",
+                        gap: "12px",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <small
+                        style={{
+                          opacity: 0.55,
+                        }}
+                      >
+                        {formatNoteDate(
+                          note.updated_at !==
+                            note.created_at
+                            ? note.updated_at
+                            : note.created_at
+                        )}
+                      </small>
+
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "8px",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          className={
+                            styles.secondaryButton
+                          }
+                          onClick={() =>
+                            startEditingNote(
+                              note
+                            )
+                          }
+                          style={{
+                            padding:
+                              "8px 12px",
+                            fontSize: "13px",
+                          }}
+                        >
+                          Modifica
+                        </button>
+
+                        <button
+                          type="button"
+                          className={
+                            styles.secondaryButton
+                          }
+                          onClick={() =>
+                            deleteNote(note.id)
+                          }
+                          style={{
+                            padding:
+                              "8px 12px",
+                            fontSize: "13px",
+                          }}
+                        >
+                          Elimina
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </section>
       </section>
     </main>
