@@ -65,7 +65,6 @@ export default function ProfilePage() {
       .update({
         nome,
         cognome,
-        ruolo_account: ruoloAccount,
       })
       .eq("id", user.id);
 
@@ -99,6 +98,7 @@ export default function ProfilePage() {
           <span>{email}</span>
 
           <button
+            type="button"
             onClick={async () => {
               await supabase.auth.signOut();
               window.location.href = "/login";
@@ -128,7 +128,12 @@ export default function ProfilePage() {
         <form className="profile-form" onSubmit={handleSubmit}>
           <div className="profile-field">
             <label htmlFor="email">Email</label>
-            <input id="email" type="email" value={email} disabled />
+            <input
+              id="email"
+              type="email"
+              value={email}
+              disabled
+            />
           </div>
 
           <div className="profile-row">
@@ -156,25 +161,25 @@ export default function ProfilePage() {
           </div>
 
           <div className="profile-field">
-            <label htmlFor="ruolo_account">Tipo di account</label>
+            <label htmlFor="ruolo_account">
+              Tipo di account
+            </label>
 
-            <select
+            <input
               id="ruolo_account"
-              value={ruoloAccount}
-              onChange={(event) => setRuoloAccount(event.target.value)}
-            >
-              <option value="">Seleziona...</option>
-              <option value="Calciatore">Calciatore</option>
-              <option value="Scout">Scout</option>
-              <option value="Agente">Agente</option>
-            </select>
+              type="text"
+              value={ruoloAccount || "Non configurato"}
+              disabled
+            />
           </div>
 
           <button type="submit" disabled={saving}>
             {saving ? "Salvataggio..." : "Salva profilo →"}
           </button>
 
-          {message && <p className="auth-message">{message}</p>}
+          {message && (
+            <p className="auth-message">{message}</p>
+          )}
         </form>
       </section>
     </main>
