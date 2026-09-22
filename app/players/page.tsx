@@ -15,6 +15,7 @@ type Player = {
   club: string | null;
   categoria: string | null;
   provincia: string | null;
+  video: string | null;
   visibile: boolean | null;
 };
 
@@ -64,6 +65,41 @@ function getPositionOptions(ruolo: string) {
   return [];
 }
 
+function getBirthYear(date: string | null) {
+  if (!date) return null;
+
+  const year = new Date(date).getFullYear();
+
+  return Number.isNaN(year) ? null : year;
+}
+
+function getAge(date: string | null) {
+  if (!date) return null;
+
+  const birthDate = new Date(date);
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return null;
+  }
+
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+
+  const monthDifference =
+    today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 &&
+      today.getDate() < birthDate.getDate())
+  ) {
+    age--;
+  }
+
+  return age >= 0 ? age : null;
+}
+
 export default function PlayersPage() {
   const supabase = createClient();
 
@@ -104,7 +140,7 @@ export default function PlayersPage() {
       let query = supabase
         .from("players")
         .select(
-          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, visibile"
+          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, visibile"
         )
         .eq("visibile", true)
         .order("created_at", { ascending: false })
@@ -524,47 +560,97 @@ export default function PlayersPage() {
           </div>
         ) : (
           <div className="dashboard-grid">
-            {players.map((player) => (
-              <a
-                className="dashboard-card"
-                key={player.id}
-                href={`/players/${player.id}`}
-              >
-                <span>
-                  {player.ruolo || "GIOCATORE"}
-                </span>
+            {players.map((player) => {
+              const birthYear = getBirthYear(
+                player.data_nascita
+              );
 
-                <h2>
-                  {player.nome || ""}{" "}
-                  {player.cognome || ""}
-                </h2>
+              const age = getAge(
+                player.data_nascita
+              );
 
-                <p>
-                  {player.club ||
-                    "Club non specificato"}
-                </p>
+              const hasVideo =
+                typeof player.video === "string" &&
+                player.video.trim().length > 0;
 
-                <p>
-                  {player.altezza
-                    ? `${player.altezza} cm`
-                    : "Altezza non specificata"}
-                  {" · "}
-                  {footLabel(player.piede)}
-                </p>
+              return (
+                <a
+                  className="dashboard-card"
+                  key={player.id}
+                  href={`/players/${player.id}`}
+                >
+                  <span>
+                    {player.ruolo || "GIOCATORE"}
+                  </span>
 
-                <p>
-                  {player.posizione
-                    ? player.posizione
-                    : player.categoria ||
+                  <h2>
+                    {player.nome || ""}{" "}
+                    {player.cognome || ""}
+                  </h2>
+
+                  <p>
+                    {player.posizione ||
+                      "Posizione non specificata"}
+                  </p>
+
+                  <p>
+                    {player.club ||
+                      "Club non specificato"}
+                  </p>
+
+                  <p>
+                    {birthYear
+                      ? `${birthYear}${age !== null ? ` · ${age} anni` : ""}`
+                      : "Anno di nascita non specificato"}
+                  </p>
+
+                  <p>
+                    {player.altezza
+                      ? `${player.altezza} cm`
+                      : "Altezza non specificata"}
+                    {" · "}
+                    {footLabel(player.piede)}
+                  </p>
+
+                  <p>
+                    {player.categoria ||
                       "Categoria non specificata"}
-                  {player.provincia
-                    ? ` · ${player.provincia}`
-                    : ""}
-                </p>
+                    {player.provincia
+                      ? ` · ${player.provincia}`
+                      : ""}
+                  </p>
 
-                <strong>→</strong>
-              </a>
-            ))}
+                  {hasVideo && (
+                    <div
+                      style={{
+                        marginTop: "14px",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "7px",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                        color: "#39ff88",
+                      }}
+                    >
+                      <span
+                        style={{
+                          width: "7px",
+                          height: "7px",
+                          borderRadius: "50%",
+                          background: "#39ff88",
+                          display: "inline-block",
+                        }}
+                      />
+
+                      VIDEO DISPONIBILE
+                    </div>
+                  )}
+
+                  <strong>→</strong>
+                </a>
+              );
+            })}
           </div>
         )}
       </section>
