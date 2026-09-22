@@ -53,6 +53,7 @@ export default function PlayerDetailPage() {
 
   const [player, setPlayer] = useState<Player | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [accountRole, setAccountRole] = useState<string | null>(null);
 
   const [shortlistId, setShortlistId] = useState<string | null>(null);
   const [isShortlisted, setIsShortlisted] = useState(false);
@@ -95,6 +96,17 @@ export default function PlayerDetailPage() {
       }
 
       setCurrentUserId(user.id);
+
+      // Recupera il tipo di account dell'utente
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("ruolo_account")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (!profileError && profile) {
+        setAccountRole(profile.ruolo_account);
+      }
 
       const playerId = String(params.id);
 
@@ -142,11 +154,13 @@ export default function PlayerDetailPage() {
         }
       }
 
-      // Carica solo le note dello scout attualmente loggato
+      // Le note rimangono disponibili come prima
       await loadNotes(user.id, playerId);
 
-      // Carica la valutazione dello scout attualmente loggato
-      await loadRating(user.id, playerId);
+      // La valutazione viene caricata SOLO per gli Scout
+      if (profile?.ruolo_account === "Scout") {
+        await loadRating(user.id, playerId);
+      }
 
       setLoading(false);
     }
@@ -184,6 +198,14 @@ export default function PlayerDetailPage() {
   }
 
   async function saveRating() {
+    // Solo gli Scout possono salvare valutazioni
+    if (accountRole !== "Scout") {
+      setMessage(
+        "Solo gli account Scout possono creare o modificare valutazioni."
+      );
+      return;
+    }
+
     if (!player || !currentUserId) {
       return;
     }
@@ -645,6 +667,7 @@ export default function PlayerDetailPage() {
 
   const age = calculateAge(player.data_nascita);
   const isOwner = currentUserId === player.user_id;
+  const isScout = accountRole === "Scout";
 
   return (
     <main className={styles.page}>
@@ -902,246 +925,248 @@ export default function PlayerDetailPage() {
         {/* VALUTAZIONE SCOUT          */}
         {/* ========================= */}
 
-        <section className={styles.card}>
-          <div className={styles.cardHeader}>
-            <span className={styles.sectionLabel}>
-              SCOUTING
-            </span>
+        {isScout && (
+          <section className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.sectionLabel}>
+                SCOUTING
+              </span>
 
-            <h2>Valutazione</h2>
+              <h2>Valutazione</h2>
 
-            <p
-              style={{
-                marginTop: "8px",
-                marginBottom: 0,
-                fontSize: "14px",
-                opacity: 0.65,
-              }}
-            >
-              Valutazione privata del tuo scouting.
-            </p>
-          </div>
-
-          {ratingLoading ? (
-            <p
-              style={{
-                marginTop: "24px",
-                opacity: 0.6,
-              }}
-            >
-              Caricamento valutazione...
-            </p>
-          ) : (
-            <>
-              <div
+              <p
                 style={{
-                  display: "grid",
-                  gridTemplateColumns:
-                    "repeat(auto-fit, minmax(180px, 1fr))",
-                  gap: "24px",
-                  marginTop: "28px",
+                  marginTop: "8px",
+                  marginBottom: 0,
+                  fontSize: "14px",
+                  opacity: 0.65,
                 }}
               >
-                <div>
-                  <small
-                    style={{
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    Tecnica
-                  </small>
+                Valutazione privata del tuo scouting.
+              </p>
+            </div>
 
-                  {renderRatingButtons(
-                    tecnica,
-                    setTecnica
-                  )}
-                </div>
-
-                <div>
-                  <small
-                    style={{
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    Fisico
-                  </small>
-
-                  {renderRatingButtons(
-                    fisico,
-                    setFisico
-                  )}
-                </div>
-
-                <div>
-                  <small
-                    style={{
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    Tattica
-                  </small>
-
-                  {renderRatingButtons(
-                    tattica,
-                    setTattica
-                  )}
-                </div>
-
-                <div>
-                  <small
-                    style={{
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    Mentalità
-                  </small>
-
-                  {renderRatingButtons(
-                    mentalita,
-                    setMentalita
-                  )}
-                </div>
-
-                <div>
-                  <small
-                    style={{
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    Potenziale
-                  </small>
-
-                  {renderRatingButtons(
-                    potenziale,
-                    setPotenziale
-                  )}
-                </div>
-
-                <div>
-                  <small
-                    style={{
-                      fontWeight: 700,
-                      textTransform: "uppercase",
-                      letterSpacing: "0.06em",
-                    }}
-                  >
-                    Complessiva
-                  </small>
-
-                  {renderRatingButtons(
-                    complessiva,
-                    setComplessiva
-                  )}
-                </div>
-              </div>
-
-              <div
+            {ratingLoading ? (
+              <p
                 style={{
-                  marginTop: "28px",
-                  maxWidth: "420px",
+                  marginTop: "24px",
+                  opacity: 0.6,
                 }}
               >
-                <label
-                  htmlFor="rating-status"
+                Caricamento valutazione...
+              </p>
+            ) : (
+              <>
+                <div
                   style={{
-                    display: "block",
-                    fontSize: "12px",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.06em",
-                    marginBottom: "8px",
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fit, minmax(180px, 1fr))",
+                    gap: "24px",
+                    marginTop: "28px",
                   }}
                 >
-                  Status scouting
-                </label>
+                  <div>
+                    <small
+                      style={{
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Tecnica
+                    </small>
 
-                <select
-                  id="rating-status"
-                  value={ratingStatus}
-                  onChange={(event) =>
-                    setRatingStatus(
-                      event.target.value
-                    )
-                  }
+                    {renderRatingButtons(
+                      tecnica,
+                      setTecnica
+                    )}
+                  </div>
+
+                  <div>
+                    <small
+                      style={{
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Fisico
+                    </small>
+
+                    {renderRatingButtons(
+                      fisico,
+                      setFisico
+                    )}
+                  </div>
+
+                  <div>
+                    <small
+                      style={{
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Tattica
+                    </small>
+
+                    {renderRatingButtons(
+                      tattica,
+                      setTattica
+                    )}
+                  </div>
+
+                  <div>
+                    <small
+                      style={{
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Mentalità
+                    </small>
+
+                    {renderRatingButtons(
+                      mentalita,
+                      setMentalita
+                    )}
+                  </div>
+
+                  <div>
+                    <small
+                      style={{
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Potenziale
+                    </small>
+
+                    {renderRatingButtons(
+                      potenziale,
+                      setPotenziale
+                    )}
+                  </div>
+
+                  <div>
+                    <small
+                      style={{
+                        fontWeight: 700,
+                        textTransform: "uppercase",
+                        letterSpacing: "0.06em",
+                      }}
+                    >
+                      Complessiva
+                    </small>
+
+                    {renderRatingButtons(
+                      complessiva,
+                      setComplessiva
+                    )}
+                  </div>
+                </div>
+
+                <div
                   style={{
-                    width: "100%",
-                    padding: "13px 14px",
-                    borderRadius: "10px",
-                    border:
-                      "1px solid rgba(0,0,0,0.12)",
-                    background: "#fff",
-                    fontFamily: "inherit",
-                    fontSize: "14px",
+                    marginTop: "28px",
+                    maxWidth: "420px",
                   }}
                 >
-                  <option value="">
-                    Seleziona status
-                  </option>
-
-                  <option value="Da osservare">
-                    Da osservare
-                  </option>
-
-                  <option value="Interessante">
-                    Interessante
-                  </option>
-
-                  <option value="Da rivedere">
-                    Da rivedere
-                  </option>
-
-                  <option value="Priorità">
-                    Priorità
-                  </option>
-                </select>
-              </div>
-
-              <div
-                style={{
-                  marginTop: "28px",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "16px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <button
-                  type="button"
-                  className={styles.shortlistButton}
-                  onClick={saveRating}
-                  disabled={ratingSaving}
-                >
-                  {ratingSaving
-                    ? "Salvataggio..."
-                    : rating
-                    ? "Aggiorna valutazione"
-                    : "Salva valutazione"}
-                </button>
-
-                {rating && (
-                  <span
+                  <label
+                    htmlFor="rating-status"
                     style={{
-                      fontSize: "13px",
-                      opacity: 0.55,
+                      display: "block",
+                      fontSize: "12px",
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                      marginBottom: "8px",
                     }}
                   >
-                    Valutazione salvata
-                  </span>
-                )}
-              </div>
-            </>
-          )}
-        </section>
+                    Status scouting
+                  </label>
+
+                  <select
+                    id="rating-status"
+                    value={ratingStatus}
+                    onChange={(event) =>
+                      setRatingStatus(
+                        event.target.value
+                      )
+                    }
+                    style={{
+                      width: "100%",
+                      padding: "13px 14px",
+                      borderRadius: "10px",
+                      border:
+                        "1px solid rgba(0,0,0,0.12)",
+                      background: "#fff",
+                      fontFamily: "inherit",
+                      fontSize: "14px",
+                    }}
+                  >
+                    <option value="">
+                      Seleziona status
+                    </option>
+
+                    <option value="Da osservare">
+                      Da osservare
+                    </option>
+
+                    <option value="Interessante">
+                      Interessante
+                    </option>
+
+                    <option value="Da rivedere">
+                      Da rivedere
+                    </option>
+
+                    <option value="Priorità">
+                      Priorità
+                    </option>
+                  </select>
+                </div>
+
+                <div
+                  style={{
+                    marginTop: "28px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "16px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <button
+                    type="button"
+                    className={styles.shortlistButton}
+                    onClick={saveRating}
+                    disabled={ratingSaving}
+                  >
+                    {ratingSaving
+                      ? "Salvataggio..."
+                      : rating
+                      ? "Aggiorna valutazione"
+                      : "Salva valutazione"}
+                  </button>
+
+                  {rating && (
+                    <span
+                      style={{
+                        fontSize: "13px",
+                        opacity: 0.55,
+                      }}
+                    >
+                      Valutazione salvata
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </section>
+        )}
 
         {/* ========================= */}
         {/* NOTE SCOUT                 */}
