@@ -1,4 +1,3 @@
-```tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -753,4 +752,3 @@ if (ownPlayer?.id) {
     </main>
   );
 }
-```
