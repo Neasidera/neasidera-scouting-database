@@ -11,6 +11,7 @@ type Player = {
   altezza: number | null;
   piede: string | null;
   ruolo: string | null;
+  posizione: string | null;
   club: string | null;
   categoria: string | null;
   provincia: string | null;
@@ -26,6 +27,43 @@ function footLabel(foot: string | null) {
   return foot || "—";
 }
 
+function getPositionOptions(ruolo: string) {
+  if (ruolo === "Portiere") {
+    return ["Portiere"];
+  }
+
+  if (ruolo === "Difensore") {
+    return [
+      "Difensore centrale",
+      "Terzino destro",
+      "Terzino sinistro",
+      "Quinto destro",
+      "Quinto sinistro",
+    ];
+  }
+
+  if (ruolo === "Centrocampista") {
+    return [
+      "Mediano",
+      "Centrocampista centrale",
+      "Mezzala destra",
+      "Mezzala sinistra",
+      "Trequartista",
+    ];
+  }
+
+  if (ruolo === "Attaccante") {
+    return [
+      "Ala destra",
+      "Ala sinistra",
+      "Seconda punta",
+      "Punta centrale",
+    ];
+  }
+
+  return [];
+}
+
 export default function PlayersPage() {
   const supabase = createClient();
 
@@ -35,6 +73,7 @@ export default function PlayersPage() {
 
   const [search, setSearch] = useState("");
   const [ruolo, setRuolo] = useState("");
+  const [posizione, setPosizione] = useState("");
   const [piede, setPiede] = useState("");
   const [categoria, setCategoria] = useState("");
   const [provincia, setProvincia] = useState("");
@@ -43,6 +82,8 @@ export default function PlayersPage() {
   const [annoA, setAnnoA] = useState("");
   const [altezzaMin, setAltezzaMin] = useState("");
   const [altezzaMax, setAltezzaMax] = useState("");
+
+  const positionOptions = getPositionOptions(ruolo);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,7 +104,7 @@ export default function PlayersPage() {
       let query = supabase
         .from("players")
         .select(
-          "id, nome, cognome, data_nascita, altezza, piede, ruolo, club, categoria, provincia, visibile"
+          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, visibile"
         )
         .eq("visibile", true)
         .order("created_at", { ascending: false })
@@ -79,6 +120,10 @@ export default function PlayersPage() {
 
       if (ruolo) {
         query = query.eq("ruolo", ruolo);
+      }
+
+      if (posizione) {
+        query = query.eq("posizione", posizione);
       }
 
       if (piede) {
@@ -157,6 +202,7 @@ export default function PlayersPage() {
   }, [
     search,
     ruolo,
+    posizione,
     piede,
     categoria,
     provincia,
@@ -168,9 +214,15 @@ export default function PlayersPage() {
     supabase,
   ]);
 
+  function handleRuoloChange(value: string) {
+    setRuolo(value);
+    setPosizione("");
+  }
+
   function resetFilters() {
     setSearch("");
     setRuolo("");
+    setPosizione("");
     setPiede("");
     setCategoria("");
     setProvincia("");
@@ -252,7 +304,7 @@ export default function PlayersPage() {
                 id="ruolo"
                 value={ruolo}
                 onChange={(event) =>
-                  setRuolo(event.target.value)
+                  handleRuoloChange(event.target.value)
                 }
               >
                 <option value="">Tutti i ruoli</option>
@@ -264,6 +316,33 @@ export default function PlayersPage() {
                 <option value="Attaccante">
                   Attaccante
                 </option>
+              </select>
+            </div>
+
+            <div className="profile-field">
+              <label htmlFor="posizione">
+                Posizione
+              </label>
+
+              <select
+                id="posizione"
+                value={posizione}
+                onChange={(event) =>
+                  setPosizione(event.target.value)
+                }
+                disabled={!ruolo}
+              >
+                <option value="">
+                  {ruolo
+                    ? "Tutte le posizioni"
+                    : "Seleziona prima il ruolo"}
+                </option>
+
+                {positionOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -474,8 +553,10 @@ export default function PlayersPage() {
                 </p>
 
                 <p>
-                  {player.categoria ||
-                    "Categoria non specificata"}
+                  {player.posizione
+                    ? player.posizione
+                    : player.categoria ||
+                      "Categoria non specificata"}
                   {player.provincia
                     ? ` · ${player.provincia}`
                     : ""}
