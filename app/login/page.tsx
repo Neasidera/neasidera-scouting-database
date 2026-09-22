@@ -1,3 +1,4 @@
+```tsx
 "use client";
 
 import { FormEvent, useState } from "react";
@@ -9,6 +10,7 @@ export default function LoginPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [ruoloAccount, setRuoloAccount] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -19,9 +21,20 @@ export default function LoginPage() {
     setMessage("");
 
     if (isRegistering) {
+      if (!ruoloAccount) {
+        setMessage("Seleziona il tipo di account.");
+        setLoading(false);
+        return;
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            ruolo_account: ruoloAccount,
+          },
+        },
       });
 
       if (error) {
@@ -68,7 +81,7 @@ export default function LoginPage() {
 
             <p>
               {isRegistering
-                ? "Crea il tuo account per iniziare."
+                ? "Scegli come vuoi utilizzare NeaSidera Scouting."
                 : "Accedi al tuo account NeaSidera Scouting."}
             </p>
           </div>
@@ -97,12 +110,45 @@ export default function LoginPage() {
               required
             />
 
+            {isRegistering && (
+              <div style={{ marginTop: "18px" }}>
+                <label htmlFor="ruolo_account">
+                  Tipo di account
+                </label>
+
+                <select
+                  id="ruolo_account"
+                  value={ruoloAccount}
+                  onChange={(event) =>
+                    setRuoloAccount(event.target.value)
+                  }
+                  required
+                >
+                  <option value="">
+                    Seleziona il tipo di account...
+                  </option>
+
+                  <option value="Calciatore">
+                    Calciatore
+                  </option>
+
+                  <option value="Scout">
+                    Scout
+                  </option>
+
+                  <option value="Agente">
+                    Agente
+                  </option>
+                </select>
+              </div>
+            )}
+
             <button type="submit" disabled={loading}>
               {loading
                 ? "Caricamento..."
                 : isRegistering
-                  ? "Crea account →"
-                  : "Accedi →"}
+                ? "Crea account →"
+                : "Accedi →"}
             </button>
           </form>
 
@@ -122,6 +168,7 @@ export default function LoginPage() {
               onClick={() => {
                 setIsRegistering(!isRegistering);
                 setMessage("");
+                setRuoloAccount("");
               }}
             >
               {isRegistering ? "Accedi" : "Registrati"}
@@ -132,3 +179,4 @@ export default function LoginPage() {
     </main>
   );
 }
+```
