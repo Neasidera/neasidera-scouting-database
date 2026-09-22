@@ -22,6 +22,13 @@ export default function EditPlayerPage() {
   const [video, setVideo] = useState("");
   const [bio, setBio] = useState("");
 
+  const [emailContatto, setEmailContatto] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+  const [instagram, setInstagram] = useState("");
+  const [tiktok, setTiktok] = useState("");
+  const [contattoGenitore, setContattoGenitore] = useState("");
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -72,13 +79,44 @@ export default function EditPlayerPage() {
       setVideo(data.video ?? "");
       setBio(data.bio ?? "");
 
+      const { data: contacts, error: contactsError } =
+        await supabase
+          .from("player_contacts")
+          .select(
+            "email, telefono, whatsapp, instagram, tiktok, contatto_genitore"
+          )
+          .eq("player_id", params.id)
+          .maybeSingle();
+
+      if (contactsError) {
+        setMessage(
+          "Errore caricamento contatti: " +
+            contactsError.message
+        );
+        setLoading(false);
+        return;
+      }
+
+      if (contacts) {
+        setEmailContatto(contacts.email ?? "");
+        setTelefono(contacts.telefono ?? "");
+        setWhatsapp(contacts.whatsapp ?? "");
+        setInstagram(contacts.instagram ?? "");
+        setTiktok(contacts.tiktok ?? "");
+        setContattoGenitore(
+          contacts.contatto_genitore ?? ""
+        );
+      }
+
       setLoading(false);
     }
 
     loadPlayer();
   }, [params.id, router, supabase]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     setSaving(true);
@@ -116,6 +154,63 @@ export default function EditPlayerPage() {
       setMessage(error.message);
       setSaving(false);
       return;
+    }
+
+    const { data: existingContacts, error: contactsCheckError } =
+      await supabase
+        .from("player_contacts")
+        .select("id")
+        .eq("player_id", params.id)
+        .maybeSingle();
+
+    if (contactsCheckError) {
+      setMessage(
+        "Errore verifica contatti: " +
+          contactsCheckError.message
+      );
+      setSaving(false);
+      return;
+    }
+
+    const contactsData = {
+      player_id: String(params.id),
+      email: emailContatto || null,
+      telefono: telefono || null,
+      whatsapp: whatsapp || null,
+      instagram: instagram || null,
+      tiktok: tiktok || null,
+      contatto_genitore: contattoGenitore || null,
+    };
+
+    if (existingContacts?.id) {
+      const { error: contactsUpdateError } =
+        await supabase
+          .from("player_contacts")
+          .update(contactsData)
+          .eq("id", existingContacts.id);
+
+      if (contactsUpdateError) {
+        setMessage(
+          "Errore salvataggio contatti: " +
+            contactsUpdateError.message
+        );
+        setSaving(false);
+        return;
+      }
+    } else {
+      const { error: contactsInsertError } =
+        await supabase
+          .from("player_contacts")
+          .insert(contactsData);
+
+      if (contactsInsertError) {
+        setMessage(
+          "Errore creazione contatti: " +
+            contactsInsertError.message
+        );
+        setSaving(false);
+        return;
+      }
     }
 
     router.push(`/players/${params.id}`);
@@ -379,6 +474,135 @@ export default function EditPlayerPage() {
                 }
                 placeholder="Descrivi il giocatore..."
               />
+            </div>
+
+            <div
+              style={{
+                marginTop: "40px",
+                marginBottom: "10px",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: "12px",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  opacity: 0.7,
+                }}
+              >
+                CONTATTI
+              </span>
+
+              <h2 style={{ marginTop: "8px" }}>
+                Come contattarmi
+              </h2>
+
+              <p style={{ opacity: 0.7 }}>
+                Questi contatti potranno essere visualizzati
+                dagli Scout e dagli Agenti sui profili visibili.
+              </p>
+            </div>
+
+            <div className="profile-row">
+              <div className="profile-field">
+                <label htmlFor="emailContatto">
+                  Email
+                </label>
+
+                <input
+                  id="emailContatto"
+                  type="email"
+                  value={emailContatto}
+                  onChange={(event) =>
+                    setEmailContatto(event.target.value)
+                  }
+                  placeholder="nome@email.com"
+                />
+              </div>
+
+              <div className="profile-field">
+                <label htmlFor="telefono">
+                  Telefono
+                </label>
+
+                <input
+                  id="telefono"
+                  type="tel"
+                  value={telefono}
+                  onChange={(event) =>
+                    setTelefono(event.target.value)
+                  }
+                  placeholder="+39 ..."
+                />
+              </div>
+            </div>
+
+            <div className="profile-row">
+              <div className="profile-field">
+                <label htmlFor="whatsapp">
+                  WhatsApp
+                </label>
+
+                <input
+                  id="whatsapp"
+                  type="tel"
+                  value={whatsapp}
+                  onChange={(event) =>
+                    setWhatsapp(event.target.value)
+                  }
+                  placeholder="+39 ..."
+                />
+              </div>
+
+              <div className="profile-field">
+                <label htmlFor="instagram">
+                  Instagram
+                </label>
+
+                <input
+                  id="instagram"
+                  type="text"
+                  value={instagram}
+                  onChange={(event) =>
+                    setInstagram(event.target.value)
+                  }
+                  placeholder="@username"
+                />
+              </div>
+            </div>
+
+            <div className="profile-row">
+              <div className="profile-field">
+                <label htmlFor="tiktok">
+                  TikTok
+                </label>
+
+                <input
+                  id="tiktok"
+                  type="text"
+                  value={tiktok}
+                  onChange={(event) =>
+                    setTiktok(event.target.value)
+                  }
+                  placeholder="@username"
+                />
+              </div>
+
+              <div className="profile-field">
+                <label htmlFor="contattoGenitore">
+                  Contatto genitore/tutore
+                </label>
+
+                <input
+                  id="contattoGenitore"
+                  type="text"
+                  value={contattoGenitore}
+                  onChange={(event) =>
+                    setContattoGenitore(event.target.value)
+                  }
+                  placeholder="Telefono o email"
+                />
+              </div>
             </div>
 
             <button type="submit" disabled={saving}>
