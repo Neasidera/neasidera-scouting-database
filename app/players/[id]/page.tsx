@@ -510,9 +510,7 @@ export default function PlayerDetailPage() {
         .from("shortlists")
         .insert({
           user_id: user.id,
-          name: "La mia shortlist",
-          description:
-            "Giocatori salvati per lo scouting",
+          player_id: player.id,
         })
         .select("id")
         .single();
