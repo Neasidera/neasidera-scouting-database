@@ -188,11 +188,10 @@ export default function PlayersPage() {
           setLoading(false);
           return;
         }
-
-        if (ownPlayer?.id) {
-          window.location.href = `/players/${ownPlayer.id}`;
-          return;
-        }
+if (ownPlayer?.id) {
+  window.location.href = `/players/${ownPlayer.id}`;
+  return;
+}
 
         /*
          * Se il calciatore non ha ancora creato il proprio
