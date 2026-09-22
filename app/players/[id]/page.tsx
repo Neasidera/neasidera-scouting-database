@@ -23,6 +23,20 @@ type Player = {
 };
 
 type ScoutNote = {
+  type ScoutRating = {
+  id: string;
+  user_id: string;
+  player_id: string;
+  tecnica: number | null;
+  fisico: number | null;
+  tattica: number | null;
+  mentalita: number | null;
+  potenziale: number | null;
+  complessiva: number | null;
+  status: string | null;
+  created_at: string;
+  updated_at: string;
+};
   id: string;
   user_id: string;
   player_id: string;
@@ -50,7 +64,18 @@ export default function PlayerDetailPage() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  // VALUTAZIONE SCOUT
+  const [rating, setRating] = useState<ScoutRating | null>(null);
+  const [ratingLoading, setRatingLoading] = useState(false);
+  const [ratingSaving, setRatingSaving] = useState(false);
 
+  const [tecnica, setTecnica] = useState<number | null>(null);
+  const [fisico, setFisico] = useState<number | null>(null);
+  const [tattica, setTattica] = useState<number | null>(null);
+  const [mentalita, setMentalita] = useState<number | null>(null);
+  const [potenziale, setPotenziale] = useState<number | null>(null);
+  const [complessiva, setComplessiva] = useState<number | null>(null);
+  const [ratingStatus, setRatingStatus] = useState("");
   useEffect(() => {
     async function loadPlayer() {
       setLoading(true);
@@ -113,15 +138,138 @@ export default function PlayerDetailPage() {
         }
       }
 
-      // Carica solo le note dello scout attualmente loggato
+            // Carica solo le note dello scout attualmente loggato
       await loadNotes(user.id, playerId);
+
+      // Carica la valutazione dello scout attualmente loggato
+      await loadRating(user.id, playerId);
 
       setLoading(false);
     }
 
     loadPlayer();
   }, [params.id, router]);
+  async function loadRating(
+    userId: string,
+    playerId: string
+  ) {
+    setRatingLoading(true);
 
+    const { data, error } = await supabase
+      .from("scout_ratings")
+      .select(
+        "id, user_id, player_id, tecnica, fisico, tattica, mentalita, potenziale, complessiva, status, created_at, updated_at"
+      )
+      .eq("user_id", userId)
+      .eq("player_id", playerId)
+      .maybeSingle();
+
+    if (!error && data) {
+      setRating(data);
+      setTecnica(data.tecnica);
+      setFisico(data.fisico);
+      setTattica(data.tattica);
+      setMentalita(data.mentalita);
+      setPotenziale(data.potenziale);
+      setComplessiva(data.complessiva);
+      setRatingStatus(data.status || "");
+    }
+
+    setRatingLoading(false);
+  }
+
+  async function saveRating() {
+    if (!player || !currentUserId) {
+      return;
+    }
+
+    setRatingSaving(true);
+    setMessage("");
+
+    const payload = {
+      user_id: currentUserId,
+      player_id: player.id,
+      tecnica,
+      fisico,
+      tattica,
+      mentalita,
+      potenziale,
+      complessiva,
+      status: ratingStatus || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("scout_ratings")
+      .upsert(payload, {
+        onConflict: "user_id,player_id",
+      })
+      .select(
+        "id, user_id, player_id, tecnica, fisico, tattica, mentalita, potenziale, complessiva, status, created_at, updated_at"
+      )
+      .single();
+
+    if (error || !data) {
+      setMessage(
+        "Errore nel salvataggio della valutazione: " +
+          (error?.message || "errore sconosciuto")
+      );
+      setRatingSaving(false);
+      return;
+    }
+
+    setRating(data);
+    setTecnica(data.tecnica);
+    setFisico(data.fisico);
+    setTattica(data.tattica);
+    setMentalita(data.mentalita);
+    setPotenziale(data.potenziale);
+    setComplessiva(data.complessiva);
+    setRatingStatus(data.status || "");
+
+    setRatingSaving(false);
+  }
+
+  function renderRatingButtons(
+    value: number | null,
+    setValue: (value: number) => void
+  ) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          gap: "6px",
+          marginTop: "8px",
+        }}
+      >
+        {[1, 2, 3, 4, 5].map((number) => (
+          <button
+            key={number}
+            type="button"
+            onClick={() => setValue(number)}
+            style={{
+              width: "38px",
+              height: "38px",
+              borderRadius: "8px",
+              border:
+                value === number
+                  ? "2px solid #39ff88"
+                  : "1px solid rgba(0,0,0,0.12)",
+              background:
+                value !== null && number <= value
+                  ? "#39ff88"
+                  : "#fff",
+              color: "#111",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            {number}
+          </button>
+        ))}
+      </div>
+    );
+  }
   async function loadNotes(userId: string, playerId: string) {
     setNotesLoading(true);
 
@@ -740,7 +888,250 @@ export default function PlayerDetailPage() {
             </div>
           )}
         </section>
+        {/* ========================= */}
+        {/* VALUTAZIONE SCOUT          */}
+        {/* ========================= */}
 
+        <section className={styles.card}>
+          <div className={styles.cardHeader}>
+            <span className={styles.sectionLabel}>
+              SCOUTING
+            </span>
+
+            <h2>Valutazione</h2>
+
+            <p
+              style={{
+                marginTop: "8px",
+                marginBottom: 0,
+                fontSize: "14px",
+                opacity: 0.65,
+              }}
+            >
+              Valutazione privata del tuo scouting.
+            </p>
+          </div>
+
+          {ratingLoading ? (
+            <p
+              style={{
+                marginTop: "24px",
+                opacity: 0.6,
+              }}
+            >
+              Caricamento valutazione...
+            </p>
+          ) : (
+            <>
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns:
+                    "repeat(auto-fit, minmax(180px, 1fr))",
+                  gap: "24px",
+                  marginTop: "28px",
+                }}
+              >
+                <div>
+                  <small
+                    style={{
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Tecnica
+                  </small>
+
+                  {renderRatingButtons(
+                    tecnica,
+                    setTecnica
+                  )}
+                </div>
+
+                <div>
+                  <small
+                    style={{
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Fisico
+                  </small>
+
+                  {renderRatingButtons(
+                    fisico,
+                    setFisico
+                  )}
+                </div>
+
+                <div>
+                  <small
+                    style={{
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Tattica
+                  </small>
+
+                  {renderRatingButtons(
+                    tattica,
+                    setTattica
+                  )}
+                </div>
+
+                <div>
+                  <small
+                    style={{
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Mentalità
+                  </small>
+
+                  {renderRatingButtons(
+                    mentalita,
+                    setMentalita
+                  )}
+                </div>
+
+                <div>
+                  <small
+                    style={{
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Potenziale
+                  </small>
+
+                  {renderRatingButtons(
+                    potenziale,
+                    setPotenziale
+                  )}
+                </div>
+
+                <div>
+                  <small
+                    style={{
+                      fontWeight: 700,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.06em",
+                    }}
+                  >
+                    Complessiva
+                  </small>
+
+                  {renderRatingButtons(
+                    complessiva,
+                    setComplessiva
+                  )}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  marginTop: "28px",
+                  maxWidth: "420px",
+                }}
+              >
+                <label
+                  htmlFor="rating-status"
+                  style={{
+                    display: "block",
+                    fontSize: "12px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Status scouting
+                </label>
+
+                <select
+                  id="rating-status"
+                  value={ratingStatus}
+                  onChange={(event) =>
+                    setRatingStatus(
+                      event.target.value
+                    )
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "13px 14px",
+                    borderRadius: "10px",
+                    border:
+                      "1px solid rgba(0,0,0,0.12)",
+                    background: "#fff",
+                    fontFamily: "inherit",
+                    fontSize: "14px",
+                  }}
+                >
+                  <option value="">
+                    Seleziona status
+                  </option>
+
+                  <option value="Da osservare">
+                    Da osservare
+                  </option>
+
+                  <option value="Interessante">
+                    Interessante
+                  </option>
+
+                  <option value="Da rivedere">
+                    Da rivedere
+                  </option>
+
+                  <option value="Priorità">
+                    Priorità
+                  </option>
+                </select>
+              </div>
+
+              <div
+                style={{
+                  marginTop: "28px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "16px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <button
+                  type="button"
+                  className={styles.shortlistButton}
+                  onClick={saveRating}
+                  disabled={ratingSaving}
+                >
+                  {ratingSaving
+                    ? "Salvataggio..."
+                    : rating
+                    ? "Aggiorna valutazione"
+                    : "Salva valutazione"}
+                </button>
+
+                {rating && (
+                  <span
+                    style={{
+                      fontSize: "13px",
+                      opacity: 0.55,
+                    }}
+                  >
+                    Valutazione salvata
+                  </span>
+                )}
+              </div>
+            </>
+          )}
+        </section>
         {/* ========================= */}
         {/* NOTE SCOUT                 */}
         {/* ========================= */}
