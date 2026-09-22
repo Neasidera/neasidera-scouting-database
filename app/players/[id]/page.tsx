@@ -22,6 +22,15 @@ type Player = {
   bio: string | null;
 };
 
+type PlayerContacts = {
+  email: string | null;
+  telefono: string | null;
+  whatsapp: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  contatto_genitore: string | null;
+};
+
 type ScoutNote = {
   id: string;
   user_id: string;
@@ -52,34 +61,56 @@ export default function PlayerDetailPage() {
   const supabase = createClient();
 
   const [player, setPlayer] = useState<Player | null>(null);
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [accountRole, setAccountRole] = useState<string | null>(null);
+  const [contacts, setContacts] =
+    useState<PlayerContacts | null>(null);
 
-  const [shortlistId, setShortlistId] = useState<string | null>(null);
-  const [isShortlisted, setIsShortlisted] = useState(false);
+  const [currentUserId, setCurrentUserId] =
+    useState<string | null>(null);
+  const [accountRole, setAccountRole] =
+    useState<string | null>(null);
+
+  const [shortlistId, setShortlistId] =
+    useState<string | null>(null);
+  const [isShortlisted, setIsShortlisted] =
+    useState(false);
   const [loading, setLoading] = useState(true);
-  const [shortlistLoading, setShortlistLoading] = useState(false);
+  const [shortlistLoading, setShortlistLoading] =
+    useState(false);
   const [message, setMessage] = useState("");
 
   // NOTE SCOUT
-  const [notes, setNotes] = useState<ScoutNote[]>([]);
+  const [notes, setNotes] =
+    useState<ScoutNote[]>([]);
   const [noteText, setNoteText] = useState("");
-  const [notesLoading, setNotesLoading] = useState(false);
-  const [noteSaving, setNoteSaving] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [notesLoading, setNotesLoading] =
+    useState(false);
+  const [noteSaving, setNoteSaving] =
+    useState(false);
+  const [editingNoteId, setEditingNoteId] =
+    useState<string | null>(null);
 
   // VALUTAZIONE SCOUT
-  const [rating, setRating] = useState<ScoutRating | null>(null);
-  const [ratingLoading, setRatingLoading] = useState(false);
-  const [ratingSaving, setRatingSaving] = useState(false);
+  const [rating, setRating] =
+    useState<ScoutRating | null>(null);
+  const [ratingLoading, setRatingLoading] =
+    useState(false);
+  const [ratingSaving, setRatingSaving] =
+    useState(false);
 
-  const [tecnica, setTecnica] = useState<number | null>(null);
-  const [fisico, setFisico] = useState<number | null>(null);
-  const [tattica, setTattica] = useState<number | null>(null);
-  const [mentalita, setMentalita] = useState<number | null>(null);
-  const [potenziale, setPotenziale] = useState<number | null>(null);
-  const [complessiva, setComplessiva] = useState<number | null>(null);
-  const [ratingStatus, setRatingStatus] = useState("");
+  const [tecnica, setTecnica] =
+    useState<number | null>(null);
+  const [fisico, setFisico] =
+    useState<number | null>(null);
+  const [tattica, setTattica] =
+    useState<number | null>(null);
+  const [mentalita, setMentalita] =
+    useState<number | null>(null);
+  const [potenziale, setPotenziale] =
+    useState<number | null>(null);
+  const [complessiva, setComplessiva] =
+    useState<number | null>(null);
+  const [ratingStatus, setRatingStatus] =
+    useState("");
 
   useEffect(() => {
     async function loadPlayer() {
@@ -98,11 +129,12 @@ export default function PlayerDetailPage() {
       setCurrentUserId(user.id);
 
       // Recupera il tipo di account dell'utente
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("ruolo_account")
-        .eq("id", user.id)
-        .maybeSingle();
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("ruolo_account")
+          .eq("id", user.id)
+          .maybeSingle();
 
       if (!profileError && profile) {
         setAccountRole(profile.ruolo_account);
@@ -110,6 +142,7 @@ export default function PlayerDetailPage() {
 
       const playerId = String(params.id);
 
+      // Carica giocatore
       const { data, error } = await supabase
         .from("players")
         .select(
@@ -119,13 +152,34 @@ export default function PlayerDetailPage() {
         .single();
 
       if (error || !data) {
-        setMessage(error?.message || "Giocatore non trovato.");
+        setMessage(
+          error?.message || "Giocatore non trovato."
+        );
         setLoading(false);
         return;
       }
 
       setPlayer(data);
 
+      // Carica contatti.
+      // Le RLS decidono automaticamente se l'utente
+      // ha il permesso di leggerli.
+      const {
+        data: contactData,
+        error: contactError,
+      } = await supabase
+        .from("player_contacts")
+        .select(
+          "email, telefono, whatsapp, instagram, tiktok, contatto_genitore"
+        )
+        .eq("player_id", playerId)
+        .maybeSingle();
+
+      if (!contactError && contactData) {
+        setContacts(contactData);
+      }
+
+      // SHORTLIST
       const {
         data: shortlist,
         error: shortlistError,
@@ -154,10 +208,10 @@ export default function PlayerDetailPage() {
         }
       }
 
-      // Le note rimangono disponibili come prima
+      // NOTE
       await loadNotes(user.id, playerId);
 
-      // La valutazione viene caricata SOLO per gli Scout
+      // VALUTAZIONE SOLO SCOUT
       if (profile?.ruolo_account === "Scout") {
         await loadRating(user.id, playerId);
       }
@@ -198,7 +252,6 @@ export default function PlayerDetailPage() {
   }
 
   async function saveRating() {
-    // Solo gli Scout possono salvare valutazioni
     if (accountRole !== "Scout") {
       setMessage(
         "Solo gli account Scout possono creare o modificare valutazioni."
@@ -664,8 +717,13 @@ export default function PlayerDetailPage() {
   }
 
   const age = calculateAge(player.data_nascita);
-  const isOwner = currentUserId === player.user_id;
+  const isOwner =
+    currentUserId === player.user_id;
   const isScout = accountRole === "Scout";
+  const isAgent = accountRole === "Agente";
+
+  const canViewContacts =
+    isOwner || isScout || isAgent;
 
   return (
     <main className={styles.page}>
@@ -918,6 +976,197 @@ export default function PlayerDetailPage() {
             </div>
           )}
         </section>
+
+        {/* ========================= */}
+        {/* CONTATTI                   */}
+        {/* ========================= */}
+
+        {canViewContacts && (
+          <section className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.sectionLabel}>
+                CONTATTI
+              </span>
+
+              <h2>
+                Contatta il giocatore
+              </h2>
+
+              <p
+                style={{
+                  marginTop: "8px",
+                  marginBottom: 0,
+                  fontSize: "14px",
+                  opacity: 0.65,
+                }}
+              >
+                {isOwner
+                  ? "Questi sono i contatti che hai inserito nel tuo profilo."
+                  : "Contatti messi a disposizione dal giocatore."}
+              </p>
+            </div>
+
+            {contacts &&
+            (contacts.email ||
+              contacts.telefono ||
+              contacts.whatsapp ||
+              contacts.instagram ||
+              contacts.tiktok ||
+              contacts.contatto_genitore) ? (
+              <div
+                className={styles.infoGrid}
+                style={{
+                  marginTop: "28px",
+                }}
+              >
+                {contacts.email && (
+                  <div className={styles.infoItem}>
+                    <small>Email</small>
+
+                    <a
+                      href={`mailto:${contacts.email}`}
+                      style={{
+                        color: "inherit",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {contacts.email}
+                    </a>
+                  </div>
+                )}
+
+                {contacts.telefono && (
+                  <div className={styles.infoItem}>
+                    <small>Telefono</small>
+
+                    <a
+                      href={`tel:${contacts.telefono}`}
+                      style={{
+                        color: "inherit",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                      }}
+                    >
+                      {contacts.telefono}
+                    </a>
+                  </div>
+                )}
+
+                {contacts.whatsapp && (
+                  <div className={styles.infoItem}>
+                    <small>WhatsApp</small>
+
+                    <a
+                      href={`https://wa.me/${contacts.whatsapp.replace(
+                        /[^0-9]/g,
+                        ""
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "inherit",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                      }}
+                    >
+                      {contacts.whatsapp}
+                    </a>
+                  </div>
+                )}
+
+                {contacts.instagram && (
+                  <div className={styles.infoItem}>
+                    <small>Instagram</small>
+
+                    <a
+                      href={
+                        contacts.instagram.startsWith(
+                          "http"
+                        )
+                          ? contacts.instagram
+                          : `https://instagram.com/${contacts.instagram.replace(
+                              "@",
+                              ""
+                            )}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "inherit",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                      }}
+                    >
+                      {contacts.instagram}
+                    </a>
+                  </div>
+                )}
+
+                {contacts.tiktok && (
+                  <div className={styles.infoItem}>
+                    <small>TikTok</small>
+
+                    <a
+                      href={
+                        contacts.tiktok.startsWith(
+                          "http"
+                        )
+                          ? contacts.tiktok
+                          : `https://tiktok.com/@${contacts.tiktok.replace(
+                              "@",
+                              ""
+                            )}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        color: "inherit",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                      }}
+                    >
+                      {contacts.tiktok}
+                    </a>
+                  </div>
+                )}
+
+                {contacts.contatto_genitore && (
+                  <div className={styles.infoItem}>
+                    <small>
+                      Genitore / Tutore
+                    </small>
+
+                    <strong
+                      style={{
+                        wordBreak: "break-word",
+                      }}
+                    >
+                      {contacts.contatto_genitore}
+                    </strong>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div
+                className={styles.emptyVideo}
+                style={{
+                  marginTop: "24px",
+                }}
+              >
+                <span>
+                  NESSUN CONTATTO INSERITO
+                </span>
+
+                <p>
+                  Il giocatore non ha ancora
+                  inserito contatti.
+                </p>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ========================= */}
         {/* VALUTAZIONE SCOUT          */}
