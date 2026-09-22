@@ -1,3 +1,4 @@
+```tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -132,8 +133,86 @@ export default function PlayersPage() {
         data: { user },
       } = await supabase.auth.getUser();
 
+      if (cancelled) return;
+
       if (!user) {
         window.location.href = "/login";
+        return;
+      }
+
+      /*
+       * Controlliamo il ruolo direttamente dalla tabella profiles.
+       * NON usiamo user_metadata per i permessi.
+       */
+      const { data: profile, error: profileError } =
+        await supabase
+          .from("profiles")
+          .select("ruolo_account")
+          .eq("id", user.id)
+          .maybeSingle();
+
+      if (cancelled) return;
+
+      if (profileError) {
+        setMessage(
+          "Errore verifica account: " +
+            profileError.message
+        );
+        setLoading(false);
+        return;
+      }
+
+      const ruoloAccount = profile?.ruolo_account;
+
+      /*
+       * Un calciatore non deve poter consultare
+       * il database degli altri giocatori.
+       *
+       * Lo mandiamo direttamente al suo profilo.
+       */
+      if (ruoloAccount === "Calciatore") {
+        const { data: ownPlayer, error: ownPlayerError } =
+          await supabase
+            .from("players")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+        if (cancelled) return;
+
+        if (ownPlayerError) {
+          setMessage(
+            "Errore caricamento profilo giocatore: " +
+              ownPlayerError.message
+          );
+          setLoading(false);
+          return;
+        }
+
+        if (ownPlayer?.id) {
+          window.location.href = `/players/${ownPlayer.id}`;
+          return;
+        }
+
+        /*
+         * Se il calciatore non ha ancora creato il proprio
+         * profilo, lo mandiamo alla pagina di creazione.
+         */
+        window.location.href = "/players/new";
+        return;
+      }
+
+      /*
+       * Solo Scout e Agente possono entrare nel database.
+       */
+      if (
+        ruoloAccount !== "Scout" &&
+        ruoloAccount !== "Agente"
+      ) {
+        setMessage(
+          "Il tuo account non ha un ruolo valido. Completa prima la configurazione del profilo."
+        );
+        setLoading(false);
         return;
       }
 
@@ -221,7 +300,8 @@ export default function PlayersPage() {
 
       if (error) {
         setMessage(
-          "Errore caricamento giocatori: " + error.message
+          "Errore caricamento giocatori: " +
+            error.message
         );
         setPlayers([]);
       } else {
@@ -282,13 +362,14 @@ export default function PlayersPage() {
   return (
     <main className="dashboard-page">
       <header className="dashboard-header">
-        <a href="/dashboard" className="dashboard-logo">
+        <a
+          href="/dashboard"
+          className="dashboard-logo"
+        >
           NEASIDERA<span>SCOUTING</span>
         </a>
 
         <div className="dashboard-user">
-          <a href="/players/new">+ Nuovo giocatore</a>
-
           <button
             type="button"
             onClick={async () => {
@@ -343,9 +424,15 @@ export default function PlayersPage() {
                   handleRuoloChange(event.target.value)
                 }
               >
-                <option value="">Tutti i ruoli</option>
-                <option value="Portiere">Portiere</option>
-                <option value="Difensore">Difensore</option>
+                <option value="">
+                  Tutti i ruoli
+                </option>
+                <option value="Portiere">
+                  Portiere
+                </option>
+                <option value="Difensore">
+                  Difensore
+                </option>
                 <option value="Centrocampista">
                   Centrocampista
                 </option>
@@ -393,9 +480,15 @@ export default function PlayersPage() {
                 }
               >
                 <option value="">Tutti</option>
-                <option value="right">Destro</option>
-                <option value="left">Sinistro</option>
-                <option value="both">Ambidestro</option>
+                <option value="right">
+                  Destro
+                </option>
+                <option value="left">
+                  Sinistro
+                </option>
+                <option value="both">
+                  Ambidestro
+                </option>
               </select>
             </div>
 
@@ -600,7 +693,11 @@ export default function PlayersPage() {
 
                   <p>
                     {birthYear
-                      ? `${birthYear}${age !== null ? ` · ${age} anni` : ""}`
+                      ? `${birthYear}${
+                          age !== null
+                            ? ` · ${age} anni`
+                            : ""
+                        }`
                       : "Anno di nascita non specificato"}
                   </p>
 
@@ -657,3 +754,4 @@ export default function PlayersPage() {
     </main>
   );
 }
+```
