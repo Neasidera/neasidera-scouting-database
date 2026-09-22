@@ -23,7 +23,15 @@ type Player = {
 };
 
 type ScoutNote = {
-  type ScoutRating = {
+  id: string;
+  user_id: string;
+  player_id: string;
+  note: string;
+  created_at: string;
+  updated_at: string;
+};
+
+type ScoutRating = {
   id: string;
   user_id: string;
   player_id: string;
@@ -37,13 +45,6 @@ type ScoutNote = {
   created_at: string;
   updated_at: string;
 };
-  id: string;
-  user_id: string;
-  player_id: string;
-  note: string;
-  created_at: string;
-  updated_at: string;
-};
 
 export default function PlayerDetailPage() {
   const params = useParams();
@@ -52,6 +53,7 @@ export default function PlayerDetailPage() {
 
   const [player, setPlayer] = useState<Player | null>(null);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+
   const [shortlistId, setShortlistId] = useState<string | null>(null);
   const [isShortlisted, setIsShortlisted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,7 @@ export default function PlayerDetailPage() {
   const [notesLoading, setNotesLoading] = useState(false);
   const [noteSaving, setNoteSaving] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+
   // VALUTAZIONE SCOUT
   const [rating, setRating] = useState<ScoutRating | null>(null);
   const [ratingLoading, setRatingLoading] = useState(false);
@@ -76,6 +79,7 @@ export default function PlayerDetailPage() {
   const [potenziale, setPotenziale] = useState<number | null>(null);
   const [complessiva, setComplessiva] = useState<number | null>(null);
   const [ratingStatus, setRatingStatus] = useState("");
+
   useEffect(() => {
     async function loadPlayer() {
       setLoading(true);
@@ -138,7 +142,7 @@ export default function PlayerDetailPage() {
         }
       }
 
-            // Carica solo le note dello scout attualmente loggato
+      // Carica solo le note dello scout attualmente loggato
       await loadNotes(user.id, playerId);
 
       // Carica la valutazione dello scout attualmente loggato
@@ -149,6 +153,7 @@ export default function PlayerDetailPage() {
 
     loadPlayer();
   }, [params.id, router]);
+
   async function loadRating(
     userId: string,
     playerId: string
@@ -270,7 +275,11 @@ export default function PlayerDetailPage() {
       </div>
     );
   }
-  async function loadNotes(userId: string, playerId: string) {
+
+  async function loadNotes(
+    userId: string,
+    playerId: string
+  ) {
     setNotesLoading(true);
 
     const { data, error } = await supabase
@@ -888,6 +897,7 @@ export default function PlayerDetailPage() {
             </div>
           )}
         </section>
+
         {/* ========================= */}
         {/* VALUTAZIONE SCOUT          */}
         {/* ========================= */}
@@ -1132,6 +1142,7 @@ export default function PlayerDetailPage() {
             </>
           )}
         </section>
+
         {/* ========================= */}
         {/* NOTE SCOUT                 */}
         {/* ========================= */}
