@@ -7,6 +7,7 @@ type Player = {
   id: string;
   nome: string | null;
   cognome: string | null;
+  data_nascita: string | null;
   altezza: number | null;
   piede: string | null;
   ruolo: string | null;
@@ -38,6 +39,8 @@ export default function PlayersPage() {
   const [categoria, setCategoria] = useState("");
   const [provincia, setProvincia] = useState("");
   const [club, setClub] = useState("");
+  const [annoDa, setAnnoDa] = useState("");
+  const [annoA, setAnnoA] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +61,7 @@ export default function PlayersPage() {
       let query = supabase
         .from("players")
         .select(
-          "id, nome, cognome, altezza, piede, ruolo, club, categoria, provincia, visibile"
+          "id, nome, cognome, data_nascita, altezza, piede, ruolo, club, categoria, provincia, visibile"
         )
         .eq("visibile", true)
         .order("created_at", { ascending: false })
@@ -101,6 +104,20 @@ export default function PlayersPage() {
         );
       }
 
+      if (/^\d{4}$/.test(annoDa)) {
+        query = query.gte(
+          "data_nascita",
+          `${annoDa}-01-01`
+        );
+      }
+
+      if (/^\d{4}$/.test(annoA)) {
+        query = query.lte(
+          "data_nascita",
+          `${annoA}-12-31`
+        );
+      }
+
       const { data, error } = await query;
 
       if (cancelled) return;
@@ -128,6 +145,8 @@ export default function PlayersPage() {
     categoria,
     provincia,
     club,
+    annoDa,
+    annoA,
     supabase,
   ]);
 
@@ -138,6 +157,8 @@ export default function PlayersPage() {
     setCategoria("");
     setProvincia("");
     setClub("");
+    setAnnoDa("");
+    setAnnoA("");
   }
 
   if (loading) {
@@ -188,14 +209,18 @@ export default function PlayersPage() {
 
         <div className="players-filters">
           <div className="profile-field players-search">
-            <label htmlFor="search">Cerca giocatore</label>
+            <label htmlFor="search">
+              Cerca giocatore
+            </label>
 
             <input
               id="search"
               type="text"
               placeholder="Nome, cognome, club, ruolo o provincia..."
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) =>
+                setSearch(event.target.value)
+              }
             />
           </div>
 
@@ -206,7 +231,9 @@ export default function PlayersPage() {
               <select
                 id="ruolo"
                 value={ruolo}
-                onChange={(event) => setRuolo(event.target.value)}
+                onChange={(event) =>
+                  setRuolo(event.target.value)
+                }
               >
                 <option value="">Tutti i ruoli</option>
                 <option value="Portiere">Portiere</option>
@@ -214,7 +241,9 @@ export default function PlayersPage() {
                 <option value="Centrocampista">
                   Centrocampista
                 </option>
-                <option value="Attaccante">Attaccante</option>
+                <option value="Attaccante">
+                  Attaccante
+                </option>
               </select>
             </div>
 
@@ -224,7 +253,9 @@ export default function PlayersPage() {
               <select
                 id="piede"
                 value={piede}
-                onChange={(event) => setPiede(event.target.value)}
+                onChange={(event) =>
+                  setPiede(event.target.value)
+                }
               >
                 <option value="">Tutti</option>
                 <option value="right">Destro</option>
@@ -234,19 +265,63 @@ export default function PlayersPage() {
             </div>
 
             <div className="profile-field">
-              <label htmlFor="categoria">Categoria</label>
+              <label htmlFor="annoDa">
+                Anno di nascita da
+              </label>
+
+              <input
+                id="annoDa"
+                type="number"
+                inputMode="numeric"
+                min="1950"
+                max="2030"
+                placeholder="Es. 2008"
+                value={annoDa}
+                onChange={(event) =>
+                  setAnnoDa(event.target.value)
+                }
+              />
+            </div>
+
+            <div className="profile-field">
+              <label htmlFor="annoA">
+                Anno di nascita a
+              </label>
+
+              <input
+                id="annoA"
+                type="number"
+                inputMode="numeric"
+                min="1950"
+                max="2030"
+                placeholder="Es. 2010"
+                value={annoA}
+                onChange={(event) =>
+                  setAnnoA(event.target.value)
+                }
+              />
+            </div>
+
+            <div className="profile-field">
+              <label htmlFor="categoria">
+                Categoria
+              </label>
 
               <input
                 id="categoria"
                 type="text"
                 placeholder="Es. U17, U19..."
                 value={categoria}
-                onChange={(event) => setCategoria(event.target.value)}
+                onChange={(event) =>
+                  setCategoria(event.target.value)
+                }
               />
             </div>
 
             <div className="profile-field">
-              <label htmlFor="provincia">Provincia</label>
+              <label htmlFor="provincia">
+                Provincia
+              </label>
 
               <input
                 id="provincia"
@@ -267,7 +342,9 @@ export default function PlayersPage() {
                 type="text"
                 placeholder="Nome club..."
                 value={club}
-                onChange={(event) => setClub(event.target.value)}
+                onChange={(event) =>
+                  setClub(event.target.value)
+                }
               />
             </div>
           </div>
@@ -294,17 +371,22 @@ export default function PlayersPage() {
         </div>
 
         {message && (
-          <p className="auth-message">{message}</p>
+          <p className="auth-message">
+            {message}
+          </p>
         )}
 
         {players.length === 0 ? (
           <div className="dashboard-card">
             <span>NESSUN RISULTATO</span>
 
-            <h2>Nessun giocatore trovato.</h2>
+            <h2>
+              Nessun giocatore trovato.
+            </h2>
 
             <p>
-              Prova a modificare o rimuovere i filtri di ricerca.
+              Prova a modificare o rimuovere i filtri
+              di ricerca.
             </p>
           </div>
         ) : (
@@ -325,7 +407,8 @@ export default function PlayersPage() {
                 </h2>
 
                 <p>
-                  {player.club || "Club non specificato"}
+                  {player.club ||
+                    "Club non specificato"}
                 </p>
 
                 <p>
