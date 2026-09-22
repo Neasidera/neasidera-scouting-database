@@ -41,6 +41,8 @@ export default function PlayersPage() {
   const [club, setClub] = useState("");
   const [annoDa, setAnnoDa] = useState("");
   const [annoA, setAnnoA] = useState("");
+  const [altezzaMin, setAltezzaMin] = useState("");
+  const [altezzaMax, setAltezzaMax] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -118,6 +120,20 @@ export default function PlayersPage() {
         );
       }
 
+      if (/^\d+$/.test(altezzaMin)) {
+        query = query.gte(
+          "altezza",
+          Number(altezzaMin)
+        );
+      }
+
+      if (/^\d+$/.test(altezzaMax)) {
+        query = query.lte(
+          "altezza",
+          Number(altezzaMax)
+        );
+      }
+
       const { data, error } = await query;
 
       if (cancelled) return;
@@ -147,6 +163,8 @@ export default function PlayersPage() {
     club,
     annoDa,
     annoA,
+    altezzaMin,
+    altezzaMax,
     supabase,
   ]);
 
@@ -159,6 +177,8 @@ export default function PlayersPage() {
     setClub("");
     setAnnoDa("");
     setAnnoA("");
+    setAltezzaMin("");
+    setAltezzaMax("");
   }
 
   if (loading) {
@@ -265,44 +285,6 @@ export default function PlayersPage() {
             </div>
 
             <div className="profile-field">
-              <label htmlFor="annoDa">
-                Anno di nascita da
-              </label>
-
-              <input
-                id="annoDa"
-                type="number"
-                inputMode="numeric"
-                min="1950"
-                max="2030"
-                placeholder="Es. 2008"
-                value={annoDa}
-                onChange={(event) =>
-                  setAnnoDa(event.target.value)
-                }
-              />
-            </div>
-
-            <div className="profile-field">
-              <label htmlFor="annoA">
-                Anno di nascita a
-              </label>
-
-              <input
-                id="annoA"
-                type="number"
-                inputMode="numeric"
-                min="1950"
-                max="2030"
-                placeholder="Es. 2010"
-                value={annoA}
-                onChange={(event) =>
-                  setAnnoA(event.target.value)
-                }
-              />
-            </div>
-
-            <div className="profile-field">
               <label htmlFor="categoria">
                 Categoria
               </label>
@@ -344,6 +326,78 @@ export default function PlayersPage() {
                 value={club}
                 onChange={(event) =>
                   setClub(event.target.value)
+                }
+              />
+            </div>
+
+            <div className="profile-field">
+              <label htmlFor="annoDa">
+                Anno di nascita da
+              </label>
+
+              <input
+                id="annoDa"
+                type="number"
+                placeholder="Es. 2008"
+                min="1990"
+                max="2030"
+                value={annoDa}
+                onChange={(event) =>
+                  setAnnoDa(event.target.value)
+                }
+              />
+            </div>
+
+            <div className="profile-field">
+              <label htmlFor="annoA">
+                Anno di nascita a
+              </label>
+
+              <input
+                id="annoA"
+                type="number"
+                placeholder="Es. 2010"
+                min="1990"
+                max="2030"
+                value={annoA}
+                onChange={(event) =>
+                  setAnnoA(event.target.value)
+                }
+              />
+            </div>
+
+            <div className="profile-field">
+              <label htmlFor="altezzaMin">
+                Altezza minima
+              </label>
+
+              <input
+                id="altezzaMin"
+                type="number"
+                placeholder="Es. 180 cm"
+                min="100"
+                max="230"
+                value={altezzaMin}
+                onChange={(event) =>
+                  setAltezzaMin(event.target.value)
+                }
+              />
+            </div>
+
+            <div className="profile-field">
+              <label htmlFor="altezzaMax">
+                Altezza massima
+              </label>
+
+              <input
+                id="altezzaMax"
+                type="number"
+                placeholder="Es. 195 cm"
+                min="100"
+                max="230"
+                value={altezzaMax}
+                onChange={(event) =>
+                  setAltezzaMax(event.target.value)
                 }
               />
             </div>
