@@ -1003,7 +1003,7 @@ export default function PlayerDetailPage() {
         {/* SCHEDA TECNICA             */}
         {/* ========================= */}
 
-        {isOwner && !hasTechnicalSheet && (
+     {!hasTechnicalSheet && (
           <section className={styles.card}>
             <div className={styles.cardHeader}>
               <span className={styles.sectionLabel}>
