@@ -84,10 +84,13 @@ function getAge(date: string | null) {
 
   const today = new Date();
 
-  let age = today.getFullYear() - birthDate.getFullYear();
+  let age =
+    today.getFullYear() -
+    birthDate.getFullYear();
 
   const monthDifference =
-    today.getMonth() - birthDate.getMonth();
+    today.getMonth() -
+    birthDate.getMonth();
 
   if (
     monthDifference < 0 ||
@@ -143,12 +146,14 @@ export default function PlayersPage() {
        * Controlliamo il ruolo direttamente dalla tabella profiles.
        * NON usiamo user_metadata per i permessi.
        */
-      const { data: profile, error: profileError } =
-        await supabase
-          .from("profiles")
-          .select("ruolo_account")
-          .eq("id", user.id)
-          .maybeSingle();
+      const {
+        data: profile,
+        error: profileError,
+      } = await supabase
+        .from("profiles")
+        .select("ruolo_account")
+        .eq("id", user.id)
+        .maybeSingle();
 
       if (cancelled) return;
 
@@ -161,7 +166,8 @@ export default function PlayersPage() {
         return;
       }
 
-      const ruoloAccount = profile?.ruolo_account;
+      const ruoloAccount =
+        profile?.ruolo_account;
 
       /*
        * Un calciatore non deve poter consultare
@@ -170,12 +176,14 @@ export default function PlayersPage() {
        * Lo mandiamo direttamente al suo profilo.
        */
       if (ruoloAccount === "Calciatore") {
-        const { data: ownPlayer, error: ownPlayerError } =
-          await supabase
-            .from("players")
-            .select("id")
-            .eq("user_id", user.id)
-            .maybeSingle();
+        const {
+          data: ownPlayer,
+          error: ownPlayerError,
+        } = await supabase
+          .from("players")
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
         if (cancelled) return;
 
@@ -187,10 +195,12 @@ export default function PlayersPage() {
           setLoading(false);
           return;
         }
-if (ownPlayer?.id) {
-  window.location.href = `/players/${ownPlayer.id}`;
-  return;
-}
+
+        if (ownPlayer?.id) {
+          window.location.href =
+            `/players/${ownPlayer.id}`;
+          return;
+        }
 
         /*
          * Se il calciatore non ha ancora creato il proprio
@@ -214,17 +224,50 @@ if (ownPlayer?.id) {
         return;
       }
 
+      /*
+       * Scout e Agente devono avere un abbonamento attivo.
+       * Il ruolo da solo NON garantisce l'accesso.
+       */
+      const {
+        data: subscription,
+        error: subscriptionError,
+      } = await supabase
+        .from("subscriptions")
+        .select("status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (cancelled) return;
+
+      if (subscriptionError) {
+        setMessage(
+          "Errore verifica abbonamento: " +
+            subscriptionError.message
+        );
+        setLoading(false);
+        return;
+      }
+
+      if (subscription?.status !== "active") {
+        window.location.href = "/subscription";
+        return;
+      }
+
       let query = supabase
         .from("players")
         .select(
           "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, visibile"
         )
         .eq("visibile", true)
-        .order("created_at", { ascending: false })
+        .order("created_at", {
+          ascending: false,
+        })
         .range(0, PAGE_SIZE - 1);
 
       if (search.trim()) {
-        const term = search.trim().replace(/,/g, " ");
+        const term = search
+          .trim()
+          .replace(/,/g, " ");
 
         query = query.or(
           `nome.ilike.%${term}%,cognome.ilike.%${term}%,club.ilike.%${term}%,ruolo.ilike.%${term}%,provincia.ilike.%${term}%`
@@ -236,7 +279,10 @@ if (ownPlayer?.id) {
       }
 
       if (posizione) {
-        query = query.eq("posizione", posizione);
+        query = query.eq(
+          "posizione",
+          posizione
+        );
       }
 
       if (piede) {
@@ -292,7 +338,10 @@ if (ownPlayer?.id) {
         );
       }
 
-      const { data, error } = await query;
+      const {
+        data,
+        error,
+      } = await query;
 
       if (cancelled) return;
 
@@ -372,7 +421,8 @@ if (ownPlayer?.id) {
             type="button"
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href = "/login";
+              window.location.href =
+                "/login";
             }}
           >
             Esci
@@ -389,8 +439,8 @@ if (ownPlayer?.id) {
           </h1>
 
           <p>
-            Cerca e filtra i profili presenti nel database
-            NeaSidera Scouting.
+            Cerca e filtra i profili presenti nel
+            database NeaSidera Scouting.
           </p>
         </div>
 
@@ -413,13 +463,17 @@ if (ownPlayer?.id) {
 
           <div className="players-filter-grid">
             <div className="profile-field">
-              <label htmlFor="ruolo">Ruolo</label>
+              <label htmlFor="ruolo">
+                Ruolo
+              </label>
 
               <select
                 id="ruolo"
                 value={ruolo}
                 onChange={(event) =>
-                  handleRuoloChange(event.target.value)
+                  handleRuoloChange(
+                    event.target.value
+                  )
                 }
               >
                 <option value="">
@@ -449,7 +503,9 @@ if (ownPlayer?.id) {
                 id="posizione"
                 value={posizione}
                 onChange={(event) =>
-                  setPosizione(event.target.value)
+                  setPosizione(
+                    event.target.value
+                  )
                 }
                 disabled={!ruolo}
               >
@@ -459,25 +515,36 @@ if (ownPlayer?.id) {
                     : "Seleziona prima il ruolo"}
                 </option>
 
-                {positionOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
+                {positionOptions.map(
+                  (option) => (
+                    <option
+                      key={option}
+                      value={option}
+                    >
+                      {option}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 
             <div className="profile-field">
-              <label htmlFor="piede">Piede</label>
+              <label htmlFor="piede">
+                Piede
+              </label>
 
               <select
                 id="piede"
                 value={piede}
                 onChange={(event) =>
-                  setPiede(event.target.value)
+                  setPiede(
+                    event.target.value
+                  )
                 }
               >
-                <option value="">Tutti</option>
+                <option value="">
+                  Tutti
+                </option>
                 <option value="right">
                   Destro
                 </option>
@@ -501,7 +568,9 @@ if (ownPlayer?.id) {
                 placeholder="Es. U17, U19..."
                 value={categoria}
                 onChange={(event) =>
-                  setCategoria(event.target.value)
+                  setCategoria(
+                    event.target.value
+                  )
                 }
               />
             </div>
@@ -517,13 +586,17 @@ if (ownPlayer?.id) {
                 placeholder="Es. Milano..."
                 value={provincia}
                 onChange={(event) =>
-                  setProvincia(event.target.value)
+                  setProvincia(
+                    event.target.value
+                  )
                 }
               />
             </div>
 
             <div className="profile-field">
-              <label htmlFor="club">Club</label>
+              <label htmlFor="club">
+                Club
+              </label>
 
               <input
                 id="club"
@@ -549,7 +622,9 @@ if (ownPlayer?.id) {
                 max="2030"
                 value={annoDa}
                 onChange={(event) =>
-                  setAnnoDa(event.target.value)
+                  setAnnoDa(
+                    event.target.value
+                  )
                 }
               />
             </div>
@@ -567,7 +642,9 @@ if (ownPlayer?.id) {
                 max="2030"
                 value={annoA}
                 onChange={(event) =>
-                  setAnnoA(event.target.value)
+                  setAnnoA(
+                    event.target.value
+                  )
                 }
               />
             </div>
@@ -585,7 +662,9 @@ if (ownPlayer?.id) {
                 max="230"
                 value={altezzaMin}
                 onChange={(event) =>
-                  setAltezzaMin(event.target.value)
+                  setAltezzaMin(
+                    event.target.value
+                  )
                 }
               />
             </div>
@@ -603,7 +682,9 @@ if (ownPlayer?.id) {
                 max="230"
                 value={altezzaMax}
                 onChange={(event) =>
-                  setAltezzaMax(event.target.value)
+                  setAltezzaMax(
+                    event.target.value
+                  )
                 }
               />
             </div>
@@ -638,30 +719,34 @@ if (ownPlayer?.id) {
 
         {players.length === 0 ? (
           <div className="dashboard-card">
-            <span>NESSUN RISULTATO</span>
+            <span>
+              NESSUN RISULTATO
+            </span>
 
             <h2>
               Nessun giocatore trovato.
             </h2>
 
             <p>
-              Prova a modificare o rimuovere i filtri
-              di ricerca.
+              Prova a modificare o rimuovere i
+              filtri di ricerca.
             </p>
           </div>
         ) : (
           <div className="dashboard-grid">
             {players.map((player) => {
-              const birthYear = getBirthYear(
-                player.data_nascita
-              );
+              const birthYear =
+                getBirthYear(
+                  player.data_nascita
+                );
 
               const age = getAge(
                 player.data_nascita
               );
 
               const hasVideo =
-                typeof player.video === "string" &&
+                typeof player.video ===
+                  "string" &&
                 player.video.trim().length > 0;
 
               return (
@@ -671,7 +756,8 @@ if (ownPlayer?.id) {
                   href={`/players/${player.id}`}
                 >
                   <span>
-                    {player.ruolo || "GIOCATORE"}
+                    {player.ruolo ||
+                      "GIOCATORE"}
                   </span>
 
                   <h2>
@@ -719,12 +805,15 @@ if (ownPlayer?.id) {
                     <div
                       style={{
                         marginTop: "14px",
-                        display: "inline-flex",
-                        alignItems: "center",
+                        display:
+                          "inline-flex",
+                        alignItems:
+                          "center",
                         gap: "7px",
                         fontSize: "11px",
                         fontWeight: 700,
-                        letterSpacing: "0.08em",
+                        letterSpacing:
+                          "0.08em",
                         color: "#39ff88",
                       }}
                     >
@@ -732,9 +821,12 @@ if (ownPlayer?.id) {
                         style={{
                           width: "7px",
                           height: "7px",
-                          borderRadius: "50%",
-                          background: "#39ff88",
-                          display: "inline-block",
+                          borderRadius:
+                            "50%",
+                          background:
+                            "#39ff88",
+                          display:
+                            "inline-block",
                         }}
                       />
 
