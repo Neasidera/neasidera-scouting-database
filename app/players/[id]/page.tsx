@@ -81,6 +81,8 @@ export default function PlayerDetailPage() {
   // SCHEDA TECNICA
   const [hasTechnicalSheet, setHasTechnicalSheet] =
     useState(false);
+  const [technicalSheetLoading, setTechnicalSheetLoading] =
+    useState(false);
 
   // NOTE SCOUT
   const [notes, setNotes] =
@@ -640,6 +642,38 @@ export default function PlayerDetailPage() {
     setShortlistLoading(false);
   }
 
+  async function openTechnicalSheet() {
+    if (!player || !hasTechnicalSheet) {
+      return;
+    }
+
+    setTechnicalSheetLoading(true);
+    setMessage("");
+
+    const filePath = `${player.id}/scheda-tecnica.pdf`;
+
+    const { data, error } = await supabase.storage
+      .from("player-documents")
+      .createSignedUrl(filePath, 60 * 10);
+
+    if (error || !data?.signedUrl) {
+      setMessage(
+        "Errore nell'apertura della scheda tecnica: " +
+          (error?.message || "file non disponibile")
+      );
+      setTechnicalSheetLoading(false);
+      return;
+    }
+
+    window.open(
+      data.signedUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    setTechnicalSheetLoading(false);
+  }
+
   function calculateAge(date: string | null) {
     if (!date) return null;
 
@@ -649,7 +683,7 @@ export default function PlayerDetailPage() {
     let age =
       today.getFullYear() -
       birthDate.getFullYear();
-
+    
     const monthDifference =
       today.getMonth() -
       birthDate.getMonth();
@@ -1064,6 +1098,69 @@ export default function PlayerDetailPage() {
                   →
                 </span>
               </a>
+            </div>
+          </section>
+        )}
+
+        {hasTechnicalSheet && (isScout || isAgent) && (
+          <section className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.sectionLabel}>
+                SCHEDA TECNICA
+              </span>
+
+              <h2>Scheda tecnica del giocatore</h2>
+
+              <p
+                style={{
+                  marginTop: "8px",
+                  marginBottom: 0,
+                  fontSize: "14px",
+                  opacity: 0.65,
+                  maxWidth: "650px",
+                  lineHeight: "1.6",
+                }}
+              >
+                Il giocatore ha caricato una scheda tecnica
+                professionale.
+              </p>
+            </div>
+
+            <div
+              style={{
+                marginTop: "24px",
+              }}
+            >
+              <button
+                type="button"
+                className={styles.videoButton}
+                onClick={openTechnicalSheet}
+                disabled={technicalSheetLoading}
+                style={{
+                  width: "100%",
+                  boxSizing: "border-box",
+                  border: "none",
+                  cursor: technicalSheetLoading
+                    ? "default"
+                    : "pointer",
+                }}
+              >
+                <span>
+                  <strong>
+                    {technicalSheetLoading
+                      ? "Apertura in corso..."
+                      : "Visualizza scheda tecnica →"}
+                  </strong>
+
+                  <small>
+                    PDF disponibile per Scout e Agenti
+                  </small>
+                </span>
+
+                <span className={styles.videoArrow}>
+                  →
+                </span>
+              </button>
             </div>
           </section>
         )}
