@@ -42,14 +42,89 @@ export default function ShortlistPage() {
         return;
       }
 
-      const { data: shortlist, error: shortlistError } =
-        await supabase
-          .from("shortlists")
-          .select("id")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: true })
-          .limit(1)
-          .maybeSingle();
+      /*
+       * Controlliamo il ruolo direttamente dalla tabella profiles.
+       * NON usiamo user_metadata per i permessi.
+       */
+      const {
+        data: profile,
+        error: profileError,
+      } = await supabase
+        .from("profiles")
+        .select("ruolo_account")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        setMessage(
+          "Errore verifica account: " +
+            profileError.message
+        );
+        setLoading(false);
+        return;
+      }
+
+      const ruoloAccount =
+        profile?.ruolo_account;
+
+      /*
+       * Solo Scout e Agente possono utilizzare la shortlist.
+       */
+      if (
+        ruoloAccount !== "Scout" &&
+        ruoloAccount !== "Agente"
+      ) {
+        if (ruoloAccount === "Calciatore") {
+          router.replace("/dashboard");
+          return;
+        }
+
+        setMessage(
+          "Il tuo account non ha un ruolo valido. Completa prima la configurazione del profilo."
+        );
+        setLoading(false);
+        return;
+      }
+
+      /*
+       * Scout e Agente devono avere un abbonamento attivo.
+       * Il ruolo da solo NON garantisce l'accesso.
+       */
+      const {
+        data: subscription,
+        error: subscriptionError,
+      } = await supabase
+        .from("subscriptions")
+        .select("status")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (subscriptionError) {
+        setMessage(
+          "Errore verifica abbonamento: " +
+            subscriptionError.message
+        );
+        setLoading(false);
+        return;
+      }
+
+      if (subscription?.status !== "active") {
+        router.replace("/subscription");
+        return;
+      }
+
+      const {
+        data: shortlist,
+        error: shortlistError,
+      } = await supabase
+        .from("shortlists")
+        .select("id")
+        .eq("user_id", user.id)
+        .order("created_at", {
+          ascending: true,
+        })
+        .limit(1)
+        .maybeSingle();
 
       if (shortlistError) {
         setMessage(
@@ -129,7 +204,7 @@ export default function ShortlistPage() {
     }
 
     loadShortlist();
-  }, [router]);
+  }, [router, supabase]);
 
   async function removeFromShortlist(
     playerId: string
@@ -152,7 +227,9 @@ export default function ShortlistPage() {
       .from("shortlists")
       .select("id")
       .eq("user_id", user.id)
-      .order("created_at", { ascending: true })
+      .order("created_at", {
+        ascending: true,
+      })
       .limit(1)
       .maybeSingle();
 
