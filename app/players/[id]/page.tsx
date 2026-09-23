@@ -78,6 +78,10 @@ export default function PlayerDetailPage() {
     useState(false);
   const [message, setMessage] = useState("");
 
+  // SCHEDA TECNICA
+  const [hasTechnicalSheet, setHasTechnicalSheet] =
+    useState(false);
+
   // NOTE SCOUT
   const [notes, setNotes] =
     useState<ScoutNote[]>([]);
@@ -177,6 +181,24 @@ export default function PlayerDetailPage() {
 
       if (!contactError && contactData) {
         setContacts(contactData);
+      }
+
+      // SCHEDA TECNICA
+      const {
+        data: documents,
+        error: documentsError,
+      } = await supabase.storage
+        .from("player-documents")
+        .list(playerId, {
+          limit: 100,
+        });
+
+      if (!documentsError) {
+        const hasSheet = documents?.some(
+          (file) => file.name === "scheda-tecnica.pdf"
+        );
+
+        setHasTechnicalSheet(Boolean(hasSheet));
       }
 
       // SHORTLIST
@@ -976,6 +998,75 @@ export default function PlayerDetailPage() {
             </div>
           )}
         </section>
+
+        {/* ========================= */}
+        {/* SCHEDA TECNICA             */}
+        {/* ========================= */}
+
+        {isOwner && !hasTechnicalSheet && (
+          <section className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.sectionLabel}>
+                SCHEDA TECNICA
+              </span>
+
+              <h2>
+                Non hai una scheda? Creala ora!
+              </h2>
+
+              <p
+                style={{
+                  marginTop: "8px",
+                  marginBottom: 0,
+                  fontSize: "14px",
+                  opacity: 0.65,
+                  maxWidth: "650px",
+                  lineHeight: "1.6",
+                }}
+              >
+                Vuoi presentare il tuo profilo in
+                modo professionale a Scout e
+                Agenti? Scrivici per richiedere la
+                tua scheda tecnica.
+              </p>
+            </div>
+
+            <div
+              style={{
+                marginTop: "24px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: "12px",
+              }}
+            >
+              <a
+                href="mailto:neasiderascouting@gmail.com?subject=SCHEDA%20TECNICA"
+                className={styles.videoButton}
+                style={{
+                  textDecoration: "none",
+                  width: "100%",
+                  boxSizing: "border-box",
+                }}
+              >
+                <span>
+                  <strong>
+                    Richiedi la scheda tecnica →
+                  </strong>
+
+                  <small>
+                    Scrivi a neasiderascouting@gmail.com
+                    con oggetto "SCHEDA TECNICA"
+                  </small>
+                </span>
+
+                <span className={styles.videoArrow}>
+                  →
+                </span>
+              </a>
+            </div>
+          </section>
+        )}
 
         {/* ========================= */}
         {/* CONTATTI                   */}
