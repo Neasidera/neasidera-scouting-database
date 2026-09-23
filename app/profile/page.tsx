@@ -3,6 +3,14 @@
 import { FormEvent, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+type Subscription = {
+  account_role: string;
+  plan: string;
+  status: string;
+  current_period_end: string | null;
+  cancel_at_period_end: boolean;
+};
+
 export default function ProfilePage() {
   const supabase = createClient();
 
@@ -10,8 +18,13 @@ export default function ProfilePage() {
   const [cognome, setCognome] = useState("");
   const [ruoloAccount, setRuoloAccount] = useState("");
   const [email, setEmail] = useState("");
+
+  const [subscription, setSubscription] =
+    useState<Subscription | null>(null);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [openingPortal, setOpeningPortal] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -39,13 +52,27 @@ export default function ProfilePage() {
         setRuoloAccount(data.ruolo_account ?? "");
       }
 
+      const { data: subscriptionData } = await supabase
+        .from("subscriptions")
+        .select(
+          "account_role, plan, status, current_period_end, cancel_at_period_end"
+        )
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (subscriptionData) {
+        setSubscription(subscriptionData);
+      }
+
       setLoading(false);
     }
 
     loadProfile();
   }, [supabase]);
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
     setSaving(true);
@@ -77,6 +104,68 @@ export default function ProfilePage() {
     setSaving(false);
   }
 
+  async function handleManageSubscription() {
+    setOpeningPortal(true);
+    setMessage("");
+
+    try {
+      const response = await fetch(
+        "/api/stripe/portal",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.url) {
+        setMessage(
+          data.error ||
+            "Errore nell'apertura del portale Stripe."
+        );
+        setOpeningPortal(false);
+        return;
+      }
+
+      window.location.href = data.url;
+    } catch {
+      setMessage(
+        "Errore di connessione al portale Stripe."
+      );
+      setOpeningPortal(false);
+    }
+  }
+
+  function formatPlan(plan: string) {
+    if (plan === "weekly") {
+      return "Settimanale";
+    }
+
+    if (plan === "monthly") {
+      return "Mensile";
+    }
+
+    return plan;
+  }
+
+  function formatDate(date: string | null) {
+    if (!date) {
+      return "—";
+    }
+
+    return new Date(date).toLocaleDateString(
+      "it-IT",
+      {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }
+    );
+  }
+
   if (loading) {
     return (
       <main className="dashboard-page">
@@ -90,7 +179,10 @@ export default function ProfilePage() {
   return (
     <main className="dashboard-page">
       <header className="dashboard-header">
-        <a href="/dashboard" className="dashboard-logo">
+        <a
+          href="/dashboard"
+          className="dashboard-logo"
+        >
           NEASIDERA<span>SCOUTING</span>
         </a>
 
@@ -120,14 +212,18 @@ export default function ProfilePage() {
           </h1>
 
           <p>
-            Inserisci le tue informazioni per utilizzare al meglio
-            NeaSidera Scouting.
+            Inserisci le tue informazioni per
+            utilizzare al meglio NeaSidera Scouting.
           </p>
         </div>
 
-        <form className="profile-form" onSubmit={handleSubmit}>
+        <form
+          className="profile-form"
+          onSubmit={handleSubmit}
+        >
           <div className="profile-field">
             <label htmlFor="email">Email</label>
+
             <input
               id="email"
               type="email"
@@ -139,23 +235,31 @@ export default function ProfilePage() {
           <div className="profile-row">
             <div className="profile-field">
               <label htmlFor="nome">Nome</label>
+
               <input
                 id="nome"
                 type="text"
                 placeholder="Nome"
                 value={nome}
-                onChange={(event) => setNome(event.target.value)}
+                onChange={(event) =>
+                  setNome(event.target.value)
+                }
               />
             </div>
 
             <div className="profile-field">
-              <label htmlFor="cognome">Cognome</label>
+              <label htmlFor="cognome">
+                Cognome
+              </label>
+
               <input
                 id="cognome"
                 type="text"
                 placeholder="Cognome"
                 value={cognome}
-                onChange={(event) => setCognome(event.target.value)}
+                onChange={(event) =>
+                  setCognome(event.target.value)
+                }
               />
             </div>
           </div>
@@ -168,19 +272,100 @@ export default function ProfilePage() {
             <input
               id="ruolo_account"
               type="text"
-              value={ruoloAccount || "Non configurato"}
+              value={
+                ruoloAccount || "Non configurato"
+              }
               disabled
             />
           </div>
 
-          <button type="submit" disabled={saving}>
-            {saving ? "Salvataggio..." : "Salva profilo →"}
+          <button
+            type="submit"
+            disabled={saving}
+          >
+            {saving
+              ? "Salvataggio..."
+              : "Salva profilo →"}
           </button>
 
           {message && (
-            <p className="auth-message">{message}</p>
+            <p className="auth-message">
+              {message}
+            </p>
           )}
         </form>
+
+        {subscription && (
+          <div className="profile-form">
+            <div className="profile-field">
+              <label>ABBONAMENTO</label>
+
+              <input
+                type="text"
+                value={
+                  subscription.status === "active"
+                    ? "Attivo"
+                    : subscription.status
+                }
+                disabled
+              />
+            </div>
+
+            <div className="profile-row">
+              <div className="profile-field">
+                <label>Tipo</label>
+
+                <input
+                  type="text"
+                  value={subscription.account_role}
+                  disabled
+                />
+              </div>
+
+              <div className="profile-field">
+                <label>Piano</label>
+
+                <input
+                  type="text"
+                  value={formatPlan(
+                    subscription.plan
+                  )}
+                  disabled
+                />
+              </div>
+            </div>
+
+            <div className="profile-field">
+              <label>
+                {subscription.cancel_at_period_end
+                  ? "Abbonamento attivo fino al"
+                  : "Prossimo rinnovo"}
+              </label>
+
+              <input
+                type="text"
+                value={formatDate(
+                  subscription.current_period_end
+                )}
+                disabled
+              />
+            </div>
+
+            {subscription.status === "active" && (
+              <button
+                type="button"
+                onClick={
+                  handleManageSubscription
+                }
+                disabled={openingPortal}
+              >
+                {openingPortal
+                  ? "Apertura..."
+                  : "Gestisci abbonamento →"}
+              </button>
+            )}
+          </div>
+        )}
       </section>
     </main>
   );
