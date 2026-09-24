@@ -42,10 +42,6 @@ export default function ShortlistPage() {
         return;
       }
 
-      /*
-       * Controlliamo il ruolo direttamente dalla tabella profiles.
-       * NON usiamo user_metadata per i permessi.
-       */
       const {
         data: profile,
         error: profileError,
@@ -67,9 +63,6 @@ export default function ShortlistPage() {
       const ruoloAccount =
         profile?.ruolo_account;
 
-      /*
-       * Solo Scout e Agente possono utilizzare la shortlist.
-       */
       if (
         ruoloAccount !== "Scout" &&
         ruoloAccount !== "Agente"
@@ -86,10 +79,6 @@ export default function ShortlistPage() {
         return;
       }
 
-      /*
-       * Scout e Agente devono avere un abbonamento attivo.
-       * Il ruolo da solo NON garantisce l'accesso.
-       */
       const {
         data: subscription,
         error: subscriptionError,
@@ -292,7 +281,7 @@ export default function ShortlistPage() {
 
   if (loading) {
     return (
-      <main className="dashboard-page">
+      <main className="dashboard-page shortlist-page">
         <div className="dashboard-loading">
           Caricamento shortlist...
         </div>
@@ -301,7 +290,7 @@ export default function ShortlistPage() {
   }
 
   return (
-    <main className="dashboard-page">
+    <main className="dashboard-page shortlist-page">
       <header className="dashboard-header">
         <a
           href="/dashboard"
@@ -329,127 +318,179 @@ export default function ShortlistPage() {
         </div>
       </header>
 
-      <section className="dashboard-content">
-        <a
-          href="/dashboard"
-          className="player-back"
-        >
-          ← Dashboard
-        </a>
+      <section className="dashboard-content shortlist-content">
+        <div className="shortlist-hero">
+          <div className="shortlist-hero-top">
+            <span className="shortlist-eyebrow">
+              SCOUTING / SHORTLIST
+            </span>
 
-        <div className="dashboard-card">
-          <span>SHORTLIST</span>
+            <span className="shortlist-counter">
+              {String(players.length).padStart(
+                2,
+                "0"
+              )}{" "}
+              PLAYERS
+            </span>
+          </div>
 
-          <h1>La mia shortlist</h1>
+          <h1>
+            La mia
+            <br />
+            <strong>shortlist.</strong>
+          </h1>
 
-          <p>
-            I giocatori che hai salvato per il
-            tuo scouting.
-          </p>
-
-          <strong>
-            {players.length}{" "}
-            {players.length === 1
-              ? "giocatore"
-              : "giocatori"}
-          </strong>
-        </div>
-
-        {message && (
-          <p className="auth-message">
-            {message}
-          </p>
-        )}
-
-        {players.length === 0 ? (
-          <div className="dashboard-card">
-            <span>SHORTLIST VUOTA</span>
-
-            <h2>
-              Non hai ancora salvato giocatori
-            </h2>
-
+          <div className="shortlist-hero-bottom">
             <p>
-              Vai nel database e aggiungi i
-              profili che vuoi tenere sotto
-              osservazione.
+              I giocatori che hai selezionato
+              durante il tuo scouting.
+              <br />
+              Tieni sotto osservazione i profili
+              più interessanti.
             </p>
 
             <a
               href="/players"
-              className="player-edit-button"
+              className="shortlist-database-link"
             >
-              Vai al database →
+              DATABASE GIOCATORI →
             </a>
           </div>
+        </div>
+
+        {message && (
+          <div className="shortlist-message">
+            <span>ATTENTION</span>
+            <p>{message}</p>
+          </div>
+        )}
+
+        {players.length === 0 ? (
+          <div className="shortlist-empty">
+            <div className="shortlist-empty-number">
+              00
+            </div>
+
+            <div>
+              <span>SHORTLIST EMPTY</span>
+
+              <h2>
+                Nessun giocatore salvato.
+              </h2>
+
+              <p>
+                Esplora il database e aggiungi i
+                profili che vuoi seguire.
+              </p>
+
+              <a
+                href="/players"
+                className="shortlist-primary-button"
+              >
+                Esplora il database →
+              </a>
+            </div>
+          </div>
         ) : (
-          <div className="player-list">
-            {players.map((player) => {
+          <div className="shortlist-list">
+            {players.map((player, index) => {
               const age = calculateAge(
                 player.data_nascita
               );
 
               return (
-                <div
+                <article
                   key={player.id}
-                  className="dashboard-card"
+                  className="shortlist-player"
                 >
-                  <div className="player-card-header">
-                    <div>
-                      <span>
-                        {player.posizione ??
-                          player.ruolo ??
-                          "GIOCATORE"}
-                      </span>
+                  <div className="shortlist-player-index">
+                    {String(index + 1).padStart(
+                      2,
+                      "0"
+                    )}
+                  </div>
 
-                      <h2>
-                        {player.nome ?? ""}{" "}
-                        <strong>
-                          {player.cognome ?? ""}
-                        </strong>
-                      </h2>
+                  <div className="shortlist-player-main">
+                    <div className="shortlist-player-heading">
+                      <div>
+                        <span className="shortlist-player-role">
+                          {player.posizione ??
+                            player.ruolo ??
+                            "GIOCATORE"}
+                        </span>
 
-                      <p>
-                        {player.club ??
-                          "Club non specificato"}
-                        {player.categoria
-                          ? " · " +
-                            player.categoria
-                          : ""}
-                      </p>
+                        <h2>
+                          {player.nome ?? ""}
+                          <strong>
+                            {player.cognome ?? ""}
+                          </strong>
+                        </h2>
+                      </div>
 
-                      <p>
-                        {age !== null
-                          ? age + " anni"
-                          : "Età non disponibile"}
-                        {player.altezza
-                          ? " · " +
-                            player.altezza +
-                            " cm"
-                          : ""}
-                        {player.piede
-                          ? " · " +
-                            player.piede
-                          : ""}
-                      </p>
-
-                      {player.provincia && (
-                        <small>
-                          📍{" "}
-                          {player.provincia}
-                        </small>
+                      {player.video && (
+                        <span className="shortlist-video">
+                          VIDEO
+                        </span>
                       )}
                     </div>
 
-                    <div>
+                    <div className="shortlist-player-meta">
+                      <div>
+                        <span>CLUB</span>
+                        <strong>
+                          {player.club ??
+                            "Non specificato"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>CATEGORIA</span>
+                        <strong>
+                          {player.categoria ??
+                            "—"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>ETÀ</span>
+                        <strong>
+                          {age !== null
+                            ? `${age} ANNI`
+                            : "—"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>ALTEZZA</span>
+                        <strong>
+                          {player.altezza
+                            ? `${player.altezza} CM`
+                            : "—"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>PIEDE</span>
+                        <strong>
+                          {player.piede ?? "—"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>PROVINCIA</span>
+                        <strong>
+                          {player.provincia ??
+                            "—"}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="shortlist-player-actions">
                       <a
-                        href={
-                          "/players/" +
-                          player.id
-                        }
-                        className="player-edit-button"
+                        href={`/players/${player.id}`}
+                        className="shortlist-view-button"
                       >
-                        Vedi profilo →
+                        VEDI PROFILO →
                       </a>
 
                       <button
@@ -459,13 +500,13 @@ export default function ShortlistPage() {
                             player.id
                           )
                         }
-                        className="player-shortlist-button"
+                        className="shortlist-remove-button"
                       >
-                        Rimuovi
+                        RIMUOVI
                       </button>
                     </div>
                   </div>
-                </div>
+                </article>
               );
             })}
           </div>
