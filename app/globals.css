@@ -1970,3 +1970,475 @@ footer {
     line-height: 1.5;
   }
 }
+/* =========================================================
+   EDIT PLAYER — NEASIDERA SCOUTING
+   ========================================================= */
+
+.profile-form {
+  width: 100%;
+  max-width: 1080px;
+  margin-top: 65px;
+
+  padding: 42px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.035),
+      rgba(255, 255, 255, 0.012)
+    );
+
+  box-shadow:
+    0 30px 80px rgba(0, 0, 0, 0.22);
+
+  position: relative;
+}
+
+.profile-form::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 90px;
+  height: 2px;
+
+  background: var(--green);
+
+  box-shadow:
+    0 0 18px rgba(140, 255, 0, 0.45);
+}
+
+/* =========================
+   ROWS
+========================= */
+
+.profile-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 18px;
+
+  margin-bottom: 18px;
+}
+
+/* =========================
+   FIELDS
+========================= */
+
+.profile-field {
+  min-width: 0;
+  margin-bottom: 20px;
+}
+
+.profile-row .profile-field {
+  margin-bottom: 0;
+}
+
+.profile-field label {
+  display: block;
+
+  margin-bottom: 9px;
+
+  color: #666;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 1.7px;
+  text-transform: uppercase;
+}
+
+.profile-field input,
+.profile-field select,
+.profile-field textarea {
+  width: 100%;
+
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  outline: none;
+
+  background: #080808;
+
+  color: #ededed;
+
+  font-family: inherit;
+  font-size: 13px;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.profile-field input,
+.profile-field select {
+  height: 50px;
+
+  padding: 0 15px;
+}
+
+.profile-field textarea {
+  min-height: 150px;
+
+  padding: 15px;
+
+  resize: vertical;
+
+  line-height: 1.65;
+}
+
+.profile-field input::placeholder,
+.profile-field textarea::placeholder {
+  color: #444;
+}
+
+.profile-field input:hover,
+.profile-field select:hover,
+.profile-field textarea:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.profile-field input:focus,
+.profile-field select:focus,
+.profile-field textarea:focus {
+  border-color: rgba(140, 255, 0, 0.55);
+
+  background: #0a0a0a;
+
+  box-shadow:
+    0 0 0 1px rgba(140, 255, 0, 0.08),
+    0 0 25px rgba(140, 255, 0, 0.035);
+}
+
+.profile-field select {
+  cursor: pointer;
+}
+
+/* =========================
+   FILE INPUTS
+========================= */
+
+.profile-field input[type="file"] {
+  height: auto;
+
+  padding: 13px;
+
+  cursor: pointer;
+
+  color: #777;
+
+  font-size: 11px;
+}
+
+.profile-field input[type="file"]::file-selector-button {
+  margin-right: 12px;
+
+  padding: 9px 13px;
+
+  border: 1px solid rgba(140, 255, 0, 0.28);
+
+  background: rgba(140, 255, 0, 0.045);
+
+  color: var(--green);
+
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+/* =========================
+   FORM TEXT
+========================= */
+
+.profile-form p {
+  color: #777;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.profile-form small {
+  display: block;
+
+  margin-top: 8px;
+
+  color: #555;
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* =========================
+   SECTION HEADINGS
+========================= */
+
+/*
+   Questi selettori intercettano i due blocchi
+   CONTATTI / DOCUMENTI già presenti nel TSX.
+*/
+
+.profile-form > div[style*="margin-top: 40px"] {
+  position: relative;
+
+  margin-top: 55px !important;
+  margin-bottom: 25px !important;
+
+  padding-top: 30px;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.profile-form > div[style*="margin-top: 40px"]::before {
+  content: "";
+
+  position: absolute;
+
+  top: -1px;
+  left: 0;
+
+  width: 42px;
+  height: 1px;
+
+  background: var(--green);
+}
+
+.profile-form > div[style*="margin-top: 40px"] span {
+  color: var(--green) !important;
+
+  font-size: 9px !important;
+  font-weight: 900;
+
+  letter-spacing: 2px !important;
+}
+
+.profile-form > div[style*="margin-top: 40px"] h2 {
+  margin-top: 9px !important;
+
+  color: #f2f2f2;
+
+  font-size: 27px;
+
+  line-height: 1.1;
+  letter-spacing: -0.8px;
+}
+
+.profile-form > div[style*="margin-top: 40px"] p {
+  max-width: 650px;
+
+  margin-top: 9px;
+
+  color: #666 !important;
+
+  font-size: 12px;
+
+  line-height: 1.7;
+}
+
+/* =========================
+   INLINE ACTION BUTTONS
+========================= */
+
+.profile-form button {
+  min-height: 46px;
+
+  padding: 0 18px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  background: #0a0a0a;
+
+  color: #d0d0d0;
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 0.7px;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.profile-form button:hover:not(:disabled) {
+  border-color: rgba(140, 255, 0, 0.45);
+
+  background: rgba(140, 255, 0, 0.045);
+
+  color: var(--green);
+
+  transform: translateY(-1px);
+}
+
+.profile-form button:disabled {
+  opacity: 0.4;
+
+  cursor: not-allowed;
+
+  transform: none;
+}
+
+/* =========================
+   MAIN SAVE BUTTON
+========================= */
+
+.profile-form > button[type="submit"] {
+  width: 100%;
+
+  min-height: 58px;
+
+  margin-top: 42px;
+
+  border: 1px solid var(--green);
+
+  background: var(--green);
+
+  color: #050505;
+
+  font-size: 11px;
+  font-weight: 900;
+
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+
+  box-shadow:
+    0 12px 35px rgba(140, 255, 0, 0.08);
+}
+
+.profile-form > button[type="submit"]:hover:not(:disabled) {
+  border-color: #a6ff3b;
+
+  background: #a6ff3b;
+
+  color: #050505;
+
+  box-shadow:
+    0 15px 45px rgba(140, 255, 0, 0.14);
+
+  transform: translateY(-2px);
+}
+
+/* =========================
+   WARNING / STATUS
+========================= */
+
+.profile-form .auth-message {
+  margin-top: 18px;
+
+  padding: 13px 15px;
+
+  border: 1px solid rgba(140, 255, 0, 0.18);
+
+  background: rgba(140, 255, 0, 0.035);
+
+  color: #bdbdbd;
+
+  font-size: 11px;
+}
+
+/* =========================
+   DASHBOARD WELCOME
+========================= */
+
+.dashboard-content .dashboard-welcome {
+  max-width: 1000px;
+}
+
+.dashboard-content .dashboard-welcome h1 {
+  font-size: clamp(52px, 7vw, 88px);
+
+  letter-spacing: -4px;
+}
+
+.dashboard-content .dashboard-welcome p {
+  max-width: 620px;
+
+  color: #707070;
+}
+
+/* =========================
+   ERROR CARD
+========================= */
+
+.dashboard-content > .dashboard-card {
+  max-width: 850px;
+
+  margin-top: 60px;
+
+  min-height: auto;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 800px) {
+  .profile-form {
+    padding: 30px 24px;
+
+    margin-top: 50px;
+  }
+
+  .profile-row {
+    grid-template-columns: 1fr;
+
+    gap: 0;
+  }
+
+  .profile-row .profile-field {
+    margin-bottom: 20px;
+  }
+
+  .dashboard-content .dashboard-welcome h1 {
+    font-size: clamp(48px, 12vw, 72px);
+
+    letter-spacing: -3px;
+  }
+}
+
+@media (max-width: 520px) {
+  .dashboard-content {
+    width: 91%;
+  }
+
+  .profile-form {
+    margin-top: 40px;
+
+    padding: 24px 18px;
+  }
+
+  .profile-field input,
+  .profile-field select {
+    height: 48px;
+  }
+
+  .profile-field textarea {
+    min-height: 130px;
+  }
+
+  .profile-form > div[style*="margin-top: 40px"] {
+    margin-top: 42px !important;
+
+    padding-top: 25px;
+  }
+
+  .profile-form > div[style*="margin-top: 40px"] h2 {
+    font-size: 23px;
+  }
+
+  .profile-form > button[type="submit"] {
+    min-height: 54px;
+
+    margin-top: 32px;
+  }
+}
