@@ -526,19 +526,35 @@ export default function EditPlayerPage() {
         </div>
       </header>
 
-      <section className="dashboard-content">
-        <div className="dashboard-welcome">
-          <span>MODIFICA PROFILO</span>
+      <section className="dashboard-content edit-player-page">
+        <div className="edit-player-hero">
+          <div className="edit-player-hero-top">
+            <span className="edit-player-eyebrow">
+              PLAYER MANAGEMENT
+            </span>
+
+            <span className="edit-player-status">
+              EDIT MODE
+            </span>
+          </div>
 
           <h1>
             Modifica il
             <br />
-            <strong>giocatore.</strong>
+            <strong>profilo.</strong>
           </h1>
 
-          <p>
-            Aggiorna le informazioni del profilo del giocatore.
-          </p>
+          <div className="edit-player-hero-bottom">
+            <p>
+              Aggiorna e completa il profilo del giocatore.
+              <br />
+              Mantieni le informazioni sempre pronte per lo scouting.
+            </p>
+
+            <span className="edit-player-id">
+              ID / {String(params.id).slice(0, 8).toUpperCase()}
+            </span>
+          </div>
         </div>
 
         {message && (
@@ -561,9 +577,24 @@ export default function EditPlayerPage() {
 
         {!message && (
           <form
-            className="profile-form"
+            className="profile-form neasidera-edit-form"
             onSubmit={handleSubmit}
           >
+            <div className="edit-section-header">
+              <div className="edit-section-number">
+                01
+              </div>
+
+              <div>
+                <span>PLAYER PROFILE</span>
+                <h2>Dati del giocatore</h2>
+                <p>
+                  Informazioni principali utilizzate per
+                  identificare e valutare il profilo.
+                </p>
+              </div>
+            </div>
+
             <div className="profile-row">
               <div className="profile-field">
                 <label htmlFor="nome">
@@ -868,40 +899,19 @@ export default function EditPlayerPage() {
               />
             </div>
 
-            <div
-              style={{
-                marginTop: "40px",
-                marginBottom: "10px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "12px",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  opacity: 0.7,
-                }}
-              >
-                CONTATTI
-              </span>
+            <div className="edit-section-header edit-section-spaced">
+              <div className="edit-section-number">
+                02
+              </div>
 
-              <h2
-                style={{
-                  marginTop: "8px",
-                }}
-              >
-                Come contattarmi
-              </h2>
-
-              <p
-                style={{
-                  opacity: 0.7,
-                }}
-              >
-                Questi contatti potranno essere
-                visualizzati dagli Scout e dagli
-                Agenti sui profili visibili.
-              </p>
+              <div>
+                <span>CONTACTS</span>
+                <h2>Contatti</h2>
+                <p>
+                  Informazioni disponibili agli Scout e
+                  agli Agenti sui profili autorizzati.
+                </p>
+              </div>
             </div>
 
             <div className="profile-row">
@@ -1018,40 +1028,19 @@ export default function EditPlayerPage() {
               </div>
             </div>
 
-            <div
-              style={{
-                marginTop: "40px",
-                marginBottom: "10px",
-              }}
-            >
-              <span
-                style={{
-                  fontSize: "12px",
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                  opacity: 0.7,
-                }}
-              >
-                DOCUMENTI
-              </span>
+            <div className="edit-section-header edit-section-spaced">
+              <div className="edit-section-number">
+                03
+              </div>
 
-              <h2
-                style={{
-                  marginTop: "8px",
-                }}
-              >
-                Scheda tecnica
-              </h2>
-
-              <p
-                style={{
-                  opacity: 0.7,
-                }}
-              >
-                Carica la tua scheda tecnica in
-                formato PDF. Sarà disponibile per
-                Scout e Agenti autorizzati.
-              </p>
+              <div>
+                <span>DOCUMENTS</span>
+                <h2>Scheda tecnica</h2>
+                <p>
+                  Carica e gestisci la documentazione
+                  tecnica associata al profilo.
+                </p>
+              </div>
             </div>
 
             <div className="profile-field">
