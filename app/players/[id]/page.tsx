@@ -382,7 +382,7 @@ export default function PlayerDetailPage() {
     setNotesLoading(true);
 
     const { data, error } = await supabase
-      .from("scout_notes")
+      .from("scouting_notes")
       .select(
         "id, user_id, player_id, note, created_at, updated_at"
       )
@@ -414,7 +414,7 @@ export default function PlayerDetailPage() {
 
     if (editingNoteId) {
       const { data, error } = await supabase
-        .from("scout_notes")
+        .from("scouting_notes")
         .update({
           note: cleanedNote,
           updated_at: new Date().toISOString(),
@@ -447,7 +447,7 @@ export default function PlayerDetailPage() {
       setNoteText("");
     } else {
       const { data, error } = await supabase
-        .from("scout_notes")
+        .from("scouting_notes")
         .insert({
           user_id: currentUserId,
           player_id: player.id,
@@ -509,7 +509,7 @@ export default function PlayerDetailPage() {
     setMessage("");
 
     const { error } = await supabase
-      .from("scout_notes")
+      .from("scouting_notes")
       .delete()
       .eq("id", noteId)
       .eq("user_id", currentUserId);
