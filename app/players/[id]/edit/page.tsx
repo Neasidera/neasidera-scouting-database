@@ -20,6 +20,8 @@ export default function EditPlayerPage() {
   const [categoria, setCategoria] = useState("");
   const [provincia, setProvincia] = useState("");
   const [video, setVideo] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoDelete, setVideoDelete] = useState(false);
   const [bio, setBio] = useState("");
 
   const [emailContatto, setEmailContatto] = useState("");
@@ -38,6 +40,7 @@ export default function EditPlayerPage() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -301,6 +304,30 @@ export default function EditPlayerPage() {
       return;
     }
 
+    const allowedVideoTypes = [
+      "video/mp4",
+      "video/quicktime",
+      "video/webm",
+    ];
+
+    if (videoFile) {
+      if (!allowedVideoTypes.includes(videoFile.type)) {
+        setMessage(
+          "Il video deve essere in formato MP4, MOV o WEBM."
+        );
+        setSaving(false);
+        return;
+      }
+
+      if (videoFile.size > 50 * 1024 * 1024) {
+        setMessage(
+          "Il video non può superare i 50 MB."
+        );
+        setSaving(false);
+        return;
+      }
+    }
+
     const { error } = await supabase
       .from("players")
       .update({
@@ -314,7 +341,7 @@ export default function EditPlayerPage() {
         club: club || null,
         categoria: categoria || null,
         provincia: provincia || null,
-        video: video || null,
+        video: videoDelete ? null : video || null,
         bio: bio || null,
       })
       .eq("id", params.id)
@@ -324,6 +351,78 @@ export default function EditPlayerPage() {
       setMessage(error.message);
       setSaving(false);
       return;
+    }
+
+    if (videoDelete && video) {
+      if (!video.startsWith("http")) {
+        const {
+          error: deleteVideoError,
+        } = await supabase.storage
+          .from("player-videos")
+          .remove([video]);
+
+        if (deleteVideoError) {
+          setMessage(
+            "Errore eliminazione video: " +
+              deleteVideoError.message
+          );
+          setSaving(false);
+          return;
+        }
+      }
+
+      setVideo("");
+      setVideoDelete(false);
+    }
+
+    if (videoFile) {
+      setVideoUploading(true);
+
+      const videoPath = `${params.id}/video`;
+
+      const {
+        error: uploadVideoError,
+      } = await supabase.storage
+        .from("player-videos")
+        .upload(videoPath, videoFile, {
+          contentType: videoFile.type,
+          upsert: true,
+        });
+
+      if (uploadVideoError) {
+        setMessage(
+          "Errore caricamento video: " +
+            uploadVideoError.message
+        );
+        setVideoUploading(false);
+        setSaving(false);
+        return;
+      }
+
+      const {
+        error: videoPathError,
+      } = await supabase
+        .from("players")
+        .update({
+          video: videoPath,
+        })
+        .eq("id", params.id)
+        .eq("user_id", user.id);
+
+      if (videoPathError) {
+        setMessage(
+          "Video caricato, ma non è stato possibile collegarlo al profilo: " +
+            videoPathError.message
+        );
+        setVideoUploading(false);
+        setSaving(false);
+        return;
+      }
+
+      setVideo(videoPath);
+      setVideoFile(null);
+      setVideoDelete(false);
+      setVideoUploading(false);
     }
 
     const {
@@ -673,21 +772,82 @@ export default function EditPlayerPage() {
             </div>
 
             <div className="profile-field">
-              <label htmlFor="video">
-                Video
+              <label htmlFor="videoFile">
+                Video partita / highlights
               </label>
 
+              {video && !videoDelete && (
+                <p
+                  style={{
+                    marginBottom: "10px",
+                    opacity: 0.7,
+                  }}
+                >
+                  {video.startsWith("http")
+                    ? "Video esterno già collegato."
+                    : "Video già caricato sul profilo."}
+                </p>
+              )}
+
               <input
-                id="video"
-                type="url"
-                value={video}
-                onChange={(event) =>
-                  setVideo(
-                    event.target.value
-                  )
-                }
-                placeholder="https://..."
+                id="videoFile"
+                type="file"
+                accept="video/mp4,video/quicktime,video/webm"
+                onChange={(event) => {
+                  setVideoFile(
+                    event.target.files?.[0] ?? null
+                  );
+                  setVideoDelete(false);
+                }}
               />
+
+              <small
+                style={{
+                  opacity: 0.6,
+                }}
+              >
+                MP4, MOV o WEBM · massimo 50 MB.
+              </small>
+
+              {videoFile && (
+                <p
+                  style={{
+                    marginTop: "8px",
+                  }}
+                >
+                  Nuovo video:{" "}
+                  <strong>{videoFile.name}</strong>
+                </p>
+              )}
+
+              {video &&
+                !video.startsWith("http") &&
+                !videoDelete && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVideoDelete(true);
+                      setVideoFile(null);
+                    }}
+                    style={{
+                      marginTop: "10px",
+                    }}
+                  >
+                    Elimina video
+                  </button>
+                )}
+
+              {videoDelete && (
+                <p
+                  style={{
+                    marginTop: "10px",
+                    opacity: 0.7,
+                  }}
+                >
+                  Il video verrà eliminato quando
+                  salverai le modifiche.
+                </p>
+              )}
             </div>
 
             <div className="profile-field">
@@ -962,9 +1122,13 @@ export default function EditPlayerPage() {
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={
+                saving ||
+                videoUploading ||
+                uploadingScheda
+              }
             >
-              {saving
+              {saving || videoUploading
                 ? "Salvataggio..."
                 : "Salva modifiche →"}
             </button>
