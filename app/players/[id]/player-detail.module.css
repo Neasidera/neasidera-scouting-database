@@ -1,26 +1,40 @@
 .page {
   min-height: 100vh;
-  background: #050505;
+  background:
+    radial-gradient(circle at 78% 8%, rgba(140, 255, 0, 0.07), transparent 26%),
+    radial-gradient(circle at 15% 35%, rgba(140, 255, 0, 0.035), transparent 24%),
+    #050505;
   color: #f5f5f5;
 }
 
+/* =========================
+   HEADER
+========================= */
+
 .header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   width: 100%;
-  min-height: 82px;
-  padding: 0 6%;
+  min-height: 78px;
+  padding: 0 5.5%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 30px;
-  border-bottom: 1px solid #202020;
-  background: rgba(5, 5, 5, 0.96);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(5, 5, 5, 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .logo {
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
+  color: #fff;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 1.8px;
   white-space: nowrap;
+  text-decoration: none;
 }
 
 .logo span {
@@ -32,60 +46,102 @@
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 24px;
-  color: #aaa;
-  font-size: 13px;
+  gap: 10px;
+  color: #999;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .headerActions a,
 .headerActions button {
-  transition: 0.2s ease;
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
 .headerActions a:hover {
   color: #8cff00;
+  border-color: rgba(140, 255, 0, 0.18);
+  background: rgba(140, 255, 0, 0.04);
 }
 
 .headerActions button {
-  padding: 9px 15px;
-  border: 1px solid #292929;
-  background: transparent;
-  color: #ddd;
-  font: inherit;
-  cursor: pointer;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ccc;
 }
 
 .headerActions button:hover {
-  border-color: #8cff00;
+  border-color: rgba(140, 255, 0, 0.45);
   color: #8cff00;
+  background: rgba(140, 255, 0, 0.04);
 }
+
+/* =========================
+   CONTENT
+========================= */
 
 .content {
   width: 100%;
-  max-width: 1250px;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 55px 6% 100px;
+  padding: 48px 5.5% 110px;
 }
 
 .backLink {
-  display: inline-block;
-  margin-bottom: 42px;
-  color: #888;
-  font-size: 13px;
-  transition: 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 38px;
+  color: #777;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .backLink:hover {
   color: #8cff00;
+  transform: translateX(-3px);
 }
 
+/* =========================
+   PROFILE HERO
+========================= */
+
 .profileHero {
+  position: relative;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 50px;
-  padding-bottom: 48px;
-  border-bottom: 1px solid #202020;
+  gap: 60px;
+  padding: 48px 0 52px;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.profileHero::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  width: 90px;
+  height: 2px;
+  background: #8cff00;
+  box-shadow: 0 0 20px rgba(140, 255, 0, 0.5);
 }
 
 .heroMain {
@@ -93,42 +149,51 @@
 }
 
 .positionBadge {
-  display: inline-block;
-  margin-bottom: 20px;
-  padding: 7px 11px;
-  border: 1px solid #292929;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin-bottom: 22px;
+  padding: 0 10px;
+  border: 1px solid rgba(140, 255, 0, 0.3);
+  background: rgba(140, 255, 0, 0.045);
   color: #8cff00;
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 9px;
+  font-weight: 900;
   letter-spacing: 1.8px;
   text-transform: uppercase;
 }
 
 .heroMain h1 {
-  max-width: 850px;
-  font-size: clamp(48px, 7vw, 88px);
-  line-height: 0.92;
-  letter-spacing: -4px;
-  font-weight: 800;
+  max-width: 950px;
+  margin: 0;
+  font-size: clamp(56px, 8vw, 104px);
+  line-height: 0.87;
+  letter-spacing: -5px;
+  font-weight: 900;
   overflow-wrap: anywhere;
 }
 
 .heroMain h1 strong {
   display: block;
   color: #8cff00;
-  font-weight: 800;
+  font-weight: 900;
+  text-shadow: 0 0 35px rgba(140, 255, 0, 0.08);
 }
 
 .heroMeta {
-  margin-top: 25px;
-  color: #ddd;
-  font-size: 17px;
+  margin-top: 28px;
+  color: #d6d6d6;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .heroProvince {
   margin-top: 7px;
-  color: #777;
-  font-size: 13px;
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .heroActions {
@@ -136,39 +201,54 @@
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  gap: 10px;
-  min-width: 230px;
+  gap: 9px;
+  width: 245px;
 }
+
+/* =========================
+   BUTTONS
+========================= */
 
 .shortlistButton,
 .editButton {
-  min-height: 48px;
+  min-height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 13px 18px;
-  font-size: 13px;
-  font-weight: 700;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-decoration: none;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .shortlistButton {
   border: 1px solid #8cff00;
   background: #8cff00;
-  color: #000;
+  color: #050505;
+  box-shadow: 0 0 0 rgba(140, 255, 0, 0);
 }
 
 .shortlistButton:hover {
   background: #a6ff3b;
   border-color: #a6ff3b;
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 35px rgba(140, 255, 0, 0.12);
 }
 
 .shortlistButton:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .shortlistButton.shortlisted {
@@ -177,40 +257,86 @@
 }
 
 .shortlistButton.shortlisted:hover {
-  background: rgba(140, 255, 0, 0.08);
+  background: rgba(140, 255, 0, 0.07);
 }
 
 .editButton {
-  border: 1px solid #292929;
-  color: #ddd;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.025);
+  color: #ccc;
 }
 
 .editButton:hover {
-  border-color: #8cff00;
+  border-color: rgba(140, 255, 0, 0.4);
   color: #8cff00;
+  background: rgba(140, 255, 0, 0.035);
+  transform: translateY(-2px);
 }
 
+/* =========================
+   MESSAGE
+========================= */
+
 .message {
-  margin-top: 25px;
-  padding: 13px 15px;
-  border: 1px solid #292929;
-  color: #ccc;
-  font-size: 13px;
+  margin-top: 22px;
+  padding: 14px 16px;
+  border: 1px solid rgba(140, 255, 0, 0.18);
+  background: rgba(140, 255, 0, 0.035);
+  color: #cfcfcf;
+  font-size: 12px;
   line-height: 1.5;
 }
+
+/* =========================
+   GRID / CARDS
+========================= */
 
 .sectionGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-  margin-top: 28px;
+  gap: 16px;
+  margin-top: 22px;
 }
 
 .card {
-  margin-top: 18px;
-  padding: 32px;
-  background: #101010;
-  border: 1px solid #202020;
+  position: relative;
+  margin-top: 16px;
+  padding: 34px;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.035),
+      rgba(255, 255, 255, 0.012)
+    ),
+    #0b0b0b;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.14);
+}
+
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 42px;
+  height: 1px;
+  background: rgba(140, 255, 0, 0.75);
+}
+
+.card::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 90px;
+  height: 90px;
+  background: radial-gradient(
+    circle,
+    rgba(140, 255, 0, 0.045),
+    transparent 70%
+  );
+  pointer-events: none;
 }
 
 .sectionGrid .card {
@@ -218,175 +344,224 @@
 }
 
 .cardHeader {
+  position: relative;
+  z-index: 1;
   margin-bottom: 28px;
 }
 
 .sectionLabel {
   color: #8cff00;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 2px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 2.2px;
 }
 
 .cardHeader h2 {
-  margin-top: 10px;
-  font-size: 28px;
+  margin: 9px 0 0;
+  color: #f5f5f5;
+  font-size: 26px;
   line-height: 1.1;
   letter-spacing: -1px;
 }
 
+/* =========================
+   INFORMATION GRID
+========================= */
+
 .infoGrid {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  border-top: 1px solid #202020;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 .infoItem {
   min-width: 0;
   padding: 19px 15px 19px 0;
-  border-bottom: 1px solid #202020;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.065);
 }
 
 .infoItem:nth-child(even) {
   padding-left: 15px;
-  border-left: 1px solid #202020;
+  border-left: 1px solid rgba(255, 255, 255, 0.065);
 }
 
 .infoItem small {
   display: block;
-  margin-bottom: 7px;
-  color: #777;
-  font-size: 11px;
-  font-weight: 600;
+  margin-bottom: 8px;
+  color: #606060;
+  font-size: 9px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 1px;
 }
 
-.infoItem strong {
+.infoItem strong,
+.infoItem a {
   display: block;
-  color: #f5f5f5;
-  font-size: 15px;
-  font-weight: 700;
+  color: #ededed;
+  font-size: 14px;
+  font-weight: 750;
   overflow-wrap: anywhere;
 }
 
+.infoItem a:hover {
+  color: #8cff00 !important;
+}
+
+/* =========================
+   BIO
+========================= */
+
 .bio {
+  position: relative;
+  z-index: 1;
   max-width: 900px;
 }
 
 .bio p {
-  color: #c0c0c0;
+  margin: 0;
+  color: #b7b7b7;
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 1.85;
   white-space: pre-wrap;
 }
 
 .empty {
-  color: #666 !important;
+  color: #5f5f5f !important;
   font-style: italic;
 }
 
+/* =========================
+   VIDEO / DOCUMENT BUTTON
+========================= */
+
 .videoButton {
-  min-height: 90px;
+  min-height: 82px;
   display: flex;
   align-items: center;
   gap: 18px;
-  padding: 18px 20px;
-  border: 1px solid #292929;
-  background: #080808;
-  transition: 0.2s ease;
+  padding: 17px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: #070707;
+  color: #fff;
+  text-decoration: none;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    transform 0.2s ease;
 }
 
 .videoButton:hover {
-  border-color: #8cff00;
-  background: #0c0c0c;
+  border-color: rgba(140, 255, 0, 0.4);
+  background: #0b0b0b;
   transform: translateY(-2px);
-}
-
-.playIcon {
-  width: 48px;
-  height: 48px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  background: #8cff00;
-  color: #000;
-  font-size: 15px;
-  padding-left: 2px;
 }
 
 .videoButton > span:nth-child(2) {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .videoButton strong {
-  color: #fff;
-  font-size: 14px;
+  color: #f5f5f5;
+  font-size: 13px;
 }
 
 .videoButton small {
-  color: #777;
-  font-size: 12px;
+  color: #686868;
+  font-size: 11px;
+}
+
+.playIcon {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #8cff00;
+  color: #050505;
+  font-size: 14px;
+  padding-left: 2px;
 }
 
 .videoArrow {
   margin-left: auto;
   color: #8cff00;
-  font-size: 22px;
+  font-size: 21px;
+  transition: transform 0.2s ease;
+}
+
+.videoButton:hover .videoArrow {
+  transform: translateX(4px);
 }
 
 .emptyVideo {
   padding: 25px;
-  border: 1px dashed #292929;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.012);
 }
 
 .emptyVideo span {
-  color: #777;
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
+  color: #666;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.7px;
 }
 
 .emptyVideo p {
   margin-top: 7px;
-  color: #666;
-  font-size: 13px;
+  color: #555;
+  font-size: 12px;
 }
+
+/* =========================
+   ERROR
+========================= */
 
 .secondaryButton {
   margin-top: 25px;
   padding: 13px 18px;
-  border: 1px solid #292929;
+  border: 1px solid rgba(255, 255, 255, 0.12);
   background: transparent;
-  color: #ddd;
-  font-size: 13px;
-  font-weight: 700;
+  color: #ccc;
+  font-size: 12px;
+  font-weight: 800;
   cursor: pointer;
-  transition: 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    background 0.2s ease;
 }
 
 .secondaryButton:hover {
-  border-color: #8cff00;
+  border-color: rgba(140, 255, 0, 0.4);
   color: #8cff00;
+  background: rgba(140, 255, 0, 0.035);
 }
 
 .errorCard {
   max-width: 650px;
-  padding: 35px;
-  background: #101010;
-  border: 1px solid #202020;
+  padding: 36px;
+  background: #0b0b0b;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .errorCard h2 {
   margin-top: 12px;
-  font-size: 28px;
+  color: #f5f5f5;
+  font-size: 27px;
   line-height: 1.2;
 }
+
+/* =========================
+   LOADING
+========================= */
 
 .loading {
   min-height: 100vh;
@@ -394,19 +569,57 @@
   align-items: center;
   justify-content: center;
   flex-direction: column;
-  gap: 10px;
+  gap: 11px;
+  background:
+    radial-gradient(
+      circle at center,
+      rgba(140, 255, 0, 0.045),
+      transparent 32%
+    ),
+    #050505;
 }
 
 .loading span {
   color: #8cff00;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 2px;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 2.4px;
+  animation: loadingPulse 1.6s ease-in-out infinite;
 }
 
 .loading p {
-  color: #777;
-  font-size: 13px;
+  margin: 0;
+  color: #666;
+  font-size: 12px;
+}
+
+@keyframes loadingPulse {
+  0%,
+  100% {
+    opacity: 0.45;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 950px) {
+  .profileHero {
+    gap: 40px;
+  }
+
+  .heroMain h1 {
+    font-size: clamp(52px, 9vw, 82px);
+  }
+
+  .heroActions {
+    width: 220px;
+  }
 }
 
 @media (max-width: 850px) {
@@ -416,7 +629,7 @@
   }
 
   .headerActions {
-    gap: 12px;
+    gap: 8px;
   }
 
   .headerActions a {
@@ -424,17 +637,18 @@
   }
 
   .content {
-    padding: 40px 5% 80px;
+    padding: 38px 5% 80px;
   }
 
   .profileHero {
     align-items: stretch;
     flex-direction: column;
     gap: 30px;
+    padding-top: 38px;
   }
 
   .heroMain h1 {
-    font-size: clamp(46px, 12vw, 72px);
+    font-size: clamp(48px, 12vw, 76px);
   }
 
   .heroActions {
@@ -448,37 +662,66 @@
 }
 
 @media (max-width: 550px) {
+  .header {
+    padding: 0 20px;
+  }
+
   .logo {
     font-size: 14px;
+    letter-spacing: 1.4px;
   }
 
   .logo span {
     display: none;
   }
 
+  .headerActions button {
+    min-height: 34px;
+    padding: 0 11px;
+    font-size: 11px;
+  }
+
   .content {
-    padding: 30px 5% 60px;
+    padding: 30px 20px 65px;
   }
 
   .backLink {
-    margin-bottom: 30px;
+    margin-bottom: 28px;
+  }
+
+  .profileHero {
+    padding: 32px 0 35px;
+  }
+
+  .positionBadge {
+    margin-bottom: 18px;
   }
 
   .heroMain h1 {
     font-size: 48px;
-    letter-spacing: -2.5px;
+    letter-spacing: -2.8px;
+    line-height: 0.9;
   }
 
   .heroMeta {
-    font-size: 15px;
+    margin-top: 22px;
+    font-size: 14px;
+  }
+
+  .heroProvince {
+    font-size: 10px;
   }
 
   .card {
-    padding: 24px 20px;
+    padding: 25px 20px;
+  }
+
+  .cardHeader {
+    margin-bottom: 24px;
   }
 
   .cardHeader h2 {
-    font-size: 24px;
+    font-size: 23px;
   }
 
   .infoGrid {
@@ -492,7 +735,7 @@
   }
 
   .videoButton {
-    padding: 16px;
+    padding: 15px;
   }
 
   .playIcon {
@@ -502,5 +745,9 @@
 
   .videoArrow {
     font-size: 18px;
+  }
+
+  .errorCard {
+    padding: 26px 20px;
   }
 }
