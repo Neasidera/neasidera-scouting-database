@@ -168,22 +168,23 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="dashboard-page">
+      <main className="dashboard-page profile-page">
         <div className="dashboard-loading">
-          Caricamento...
+          Caricamento profilo...
         </div>
       </main>
     );
   }
 
   return (
-    <main className="dashboard-page">
+    <main className="dashboard-page profile-page">
       <header className="dashboard-header">
         <a
           href="/dashboard"
           className="dashboard-logo"
         >
-          NEASIDERA<span>SCOUTING</span>
+          NEASIDERA
+          <span>SCOUTING</span>
         </a>
 
         <div className="dashboard-user">
@@ -201,171 +202,235 @@ export default function ProfilePage() {
         </div>
       </header>
 
-      <section className="dashboard-content">
-        <div className="dashboard-welcome">
-          <span>IL MIO PROFILO</span>
+      <section className="dashboard-content profile-content">
+        <div className="profile-hero">
+          <div className="profile-hero-top">
+            <span className="profile-eyebrow">
+              ACCOUNT / PROFILE
+            </span>
+
+            <span className="profile-account-status">
+              {ruoloAccount || "NON CONFIGURATO"}
+            </span>
+          </div>
 
           <h1>
-            Completa il tuo
+            Il mio
             <br />
             <strong>profilo.</strong>
           </h1>
 
-          <p>
-            Inserisci le tue informazioni per
-            utilizzare al meglio NeaSidera Scouting.
-          </p>
+          <div className="profile-hero-bottom">
+            <p>
+              Gestisci le tue informazioni personali,
+              il ruolo del tuo account e il tuo
+              abbonamento NeaSidera.
+            </p>
+          </div>
         </div>
 
-        <form
-          className="profile-form"
-          onSubmit={handleSubmit}
-        >
-          <div className="profile-field">
-            <label htmlFor="email">Email</label>
-
-            <input
-              id="email"
-              type="email"
-              value={email}
-              disabled
-            />
-          </div>
-
-          <div className="profile-row">
-            <div className="profile-field">
-              <label htmlFor="nome">Nome</label>
-
-              <input
-                id="nome"
-                type="text"
-                placeholder="Nome"
-                value={nome}
-                onChange={(event) =>
-                  setNome(event.target.value)
-                }
-              />
-            </div>
-
-            <div className="profile-field">
-              <label htmlFor="cognome">
-                Cognome
-              </label>
-
-              <input
-                id="cognome"
-                type="text"
-                placeholder="Cognome"
-                value={cognome}
-                onChange={(event) =>
-                  setCognome(event.target.value)
-                }
-              />
-            </div>
-          </div>
-
-          <div className="profile-field">
-            <label htmlFor="ruolo_account">
-              Tipo di account
-            </label>
-
-            <input
-              id="ruolo_account"
-              type="text"
-              value={
-                ruoloAccount || "Non configurato"
-              }
-              disabled
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving}
+        <div className="profile-layout">
+          <form
+            className="profile-panel profile-details-panel"
+            onSubmit={handleSubmit}
           >
-            {saving
-              ? "Salvataggio..."
-              : "Salva profilo →"}
-          </button>
+            <div className="profile-panel-heading">
+              <div>
+                <span className="profile-panel-number">
+                  01
+                </span>
 
-          {message && (
-            <p className="auth-message">
-              {message}
-            </p>
-          )}
-        </form>
+                <div>
+                  <span className="profile-panel-eyebrow">
+                    PERSONAL DATA
+                  </span>
 
-        {subscription && (
-          <div className="profile-form">
-            <div className="profile-field">
-              <label>ABBONAMENTO</label>
-
-              <input
-                type="text"
-                value={
-                  subscription.status === "active"
-                    ? "Attivo"
-                    : subscription.status
-                }
-                disabled
-              />
+                  <h2>
+                    Informazioni
+                    <strong> personali.</strong>
+                  </h2>
+                </div>
+              </div>
             </div>
 
-            <div className="profile-row">
+            <div className="profile-fields">
               <div className="profile-field">
-                <label>Tipo</label>
+                <label htmlFor="email">
+                  EMAIL
+                </label>
 
                 <input
-                  type="text"
-                  value={subscription.account_role}
+                  id="email"
+                  type="email"
+                  value={email}
                   disabled
                 />
               </div>
 
+              <div className="profile-row">
+                <div className="profile-field">
+                  <label htmlFor="nome">
+                    NOME
+                  </label>
+
+                  <input
+                    id="nome"
+                    type="text"
+                    placeholder="Nome"
+                    value={nome}
+                    onChange={(event) =>
+                      setNome(event.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="profile-field">
+                  <label htmlFor="cognome">
+                    COGNOME
+                  </label>
+
+                  <input
+                    id="cognome"
+                    type="text"
+                    placeholder="Cognome"
+                    value={cognome}
+                    onChange={(event) =>
+                      setCognome(
+                        event.target.value
+                      )
+                    }
+                  />
+                </div>
+              </div>
+
               <div className="profile-field">
-                <label>Piano</label>
+                <label htmlFor="ruolo_account">
+                  ACCOUNT ROLE
+                </label>
 
                 <input
+                  id="ruolo_account"
                   type="text"
-                  value={formatPlan(
-                    subscription.plan
-                  )}
+                  value={
+                    ruoloAccount ||
+                    "Non configurato"
+                  }
                   disabled
                 />
               </div>
             </div>
 
-            <div className="profile-field">
-              <label>
-                {subscription.cancel_at_period_end
-                  ? "Abbonamento attivo fino al"
-                  : "Prossimo rinnovo"}
-              </label>
+            <div className="profile-panel-footer">
+              <span>
+                Le modifiche vengono salvate
+                direttamente sul tuo profilo.
+              </span>
 
-              <input
-                type="text"
-                value={formatDate(
-                  subscription.current_period_end
-                )}
-                disabled
-              />
-            </div>
-
-            {subscription.status === "active" && (
               <button
-                type="button"
-                onClick={
-                  handleManageSubscription
-                }
-                disabled={openingPortal}
+                type="submit"
+                disabled={saving}
+                className="profile-save-button"
               >
-                {openingPortal
-                  ? "Apertura..."
-                  : "Gestisci abbonamento →"}
+                {saving
+                  ? "SALVATAGGIO..."
+                  : "SALVA PROFILO →"}
               </button>
+            </div>
+
+            {message && (
+              <p className="profile-message">
+                {message}
+              </p>
             )}
-          </div>
-        )}
+          </form>
+
+          {subscription && (
+            <section className="profile-panel profile-subscription-panel">
+              <div className="profile-panel-heading">
+                <div>
+                  <span className="profile-panel-number">
+                    02
+                  </span>
+
+                  <div>
+                    <span className="profile-panel-eyebrow">
+                      SUBSCRIPTION
+                    </span>
+
+                    <h2>
+                      Il tuo
+                      <strong> accesso.</strong>
+                    </h2>
+                  </div>
+                </div>
+
+                <span
+                  className={`profile-subscription-status ${
+                    subscription.status ===
+                    "active"
+                      ? "is-active"
+                      : ""
+                  }`}
+                >
+                  {subscription.status ===
+                  "active"
+                    ? "ATTIVO"
+                    : subscription.status.toUpperCase()}
+                </span>
+              </div>
+
+              <div className="profile-subscription-grid">
+                <div>
+                  <span>TIPO ACCOUNT</span>
+
+                  <strong>
+                    {subscription.account_role}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>PIANO</span>
+
+                  <strong>
+                    {formatPlan(
+                      subscription.plan
+                    )}
+                  </strong>
+                </div>
+
+                <div>
+                  <span>
+                    {subscription.cancel_at_period_end
+                      ? "ACCESSO FINO AL"
+                      : "PROSSIMO RINNOVO"}
+                  </span>
+
+                  <strong>
+                    {formatDate(
+                      subscription.current_period_end
+                    )}
+                  </strong>
+                </div>
+              </div>
+
+              {subscription.status ===
+                "active" && (
+                <button
+                  type="button"
+                  onClick={
+                    handleManageSubscription
+                  }
+                  disabled={openingPortal}
+                  className="profile-manage-button"
+                >
+                  {openingPortal
+                    ? "APERTURA..."
+                    : "GESTISCI ABBONAMENTO →"}
+                </button>
+              )}
+            </section>
+          )}
+        </div>
       </section>
     </main>
   );
