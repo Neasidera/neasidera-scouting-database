@@ -46,16 +46,16 @@ export default function Home() {
             attraverso un database dedicato alla scoperta dei nuovi
             talenti del calcio.
           </p>
+<div className="hero-buttons">
+  <a href="/players" className="primary-button">
+    Trova giocatori →
+  </a>
 
-          <div className="hero-buttons">
-            <a href="#cerca" className="primary-button">
-              Trova giocatori →
-            </a>
+  <a href="/players/new" className="secondary-button">
+    Crea il tuo profilo
+  </a>
+</div>
 
-            <a href="#profilo" className="secondary-button">
-              Crea il tuo profilo
-            </a>
-          </div>
         </div>
       </section>
 
