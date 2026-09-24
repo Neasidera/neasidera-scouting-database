@@ -142,10 +142,6 @@ export default function PlayersPage() {
         return;
       }
 
-      /*
-       * Controlliamo il ruolo direttamente dalla tabella profiles.
-       * NON usiamo user_metadata per i permessi.
-       */
       const {
         data: profile,
         error: profileError,
@@ -169,12 +165,6 @@ export default function PlayersPage() {
       const ruoloAccount =
         profile?.ruolo_account;
 
-      /*
-       * Un calciatore non deve poter consultare
-       * il database degli altri giocatori.
-       *
-       * Lo mandiamo direttamente al suo profilo.
-       */
       if (ruoloAccount === "Calciatore") {
         const {
           data: ownPlayer,
@@ -202,17 +192,10 @@ export default function PlayersPage() {
           return;
         }
 
-        /*
-         * Se il calciatore non ha ancora creato il proprio
-         * profilo, lo mandiamo alla pagina di creazione.
-         */
         window.location.href = "/players/new";
         return;
       }
 
-      /*
-       * Solo Scout e Agente possono entrare nel database.
-       */
       if (
         ruoloAccount !== "Scout" &&
         ruoloAccount !== "Agente"
@@ -224,10 +207,6 @@ export default function PlayersPage() {
         return;
       }
 
-      /*
-       * Scout e Agente devono avere un abbonamento attivo.
-       * Il ruolo da solo NON garantisce l'accesso.
-       */
       const {
         data: subscription,
         error: subscriptionError,
@@ -398,8 +377,8 @@ export default function PlayersPage() {
 
   if (loading) {
     return (
-      <main className="dashboard-page">
-        <div className="dashboard-loading">
+      <main className="players-page">
+        <div className="players-loading">
           Caricamento giocatori...
         </div>
       </main>
@@ -407,16 +386,18 @@ export default function PlayersPage() {
   }
 
   return (
-    <main className="dashboard-page">
-      <header className="dashboard-header">
+    <main className="players-page">
+      <header className="players-header">
         <a
           href="/dashboard"
-          className="dashboard-logo"
+          className="players-logo"
         >
           NEASIDERA<span>SCOUTING</span>
         </a>
 
-        <div className="dashboard-user">
+        <div className="players-header-right">
+          <span>DATABASE</span>
+
           <button
             type="button"
             onClick={async () => {
@@ -430,41 +411,64 @@ export default function PlayersPage() {
         </div>
       </header>
 
-      <section className="dashboard-content">
-        <div className="dashboard-welcome">
-          <span>DATABASE</span>
+      <section className="players-content">
+        <div className="players-intro">
+          <div>
+            <span className="players-eyebrow">
+              DATABASE · SCOUTING
+            </span>
 
-          <h1>
-            I <strong>giocatori.</strong>
-          </h1>
+            <h1>
+              I <strong>giocatori.</strong>
+            </h1>
 
-          <p>
-            Cerca e filtra i profili presenti nel
-            database NeaSidera Scouting.
-          </p>
+            <p>
+              Cerca, filtra e analizza i profili
+              presenti nel database NeaSidera.
+            </p>
+          </div>
+
+          <div className="players-intro-mark">
+            <span>NS</span>
+            <small>PLAYER DATABASE</small>
+          </div>
         </div>
 
         <div className="players-filters">
-          <div className="profile-field players-search">
-            <label htmlFor="search">
-              Cerca giocatore
-            </label>
+          <div className="players-filters-top">
+            <div className="players-search">
+              <label htmlFor="search">
+                CERCA GIOCATORE
+              </label>
 
-            <input
-              id="search"
-              type="text"
-              placeholder="Nome, cognome, club, ruolo o provincia..."
-              value={search}
-              onChange={(event) =>
-                setSearch(event.target.value)
-              }
-            />
+              <div className="players-search-box">
+                <span>⌕</span>
+
+                <input
+                  id="search"
+                  type="text"
+                  placeholder="Nome, cognome, club, ruolo o provincia..."
+                  value={search}
+                  onChange={(event) =>
+                    setSearch(event.target.value)
+                  }
+                />
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="players-reset"
+              onClick={resetFilters}
+            >
+              Azzera filtri
+            </button>
           </div>
 
           <div className="players-filter-grid">
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="ruolo">
-                Ruolo
+                RUOLO
               </label>
 
               <select
@@ -494,9 +498,9 @@ export default function PlayersPage() {
               </select>
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="posizione">
-                Posizione
+                POSIZIONE
               </label>
 
               <select
@@ -528,9 +532,9 @@ export default function PlayersPage() {
               </select>
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="piede">
-                Piede
+                PIEDE
               </label>
 
               <select
@@ -557,9 +561,9 @@ export default function PlayersPage() {
               </select>
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="categoria">
-                Categoria
+                CATEGORIA
               </label>
 
               <input
@@ -575,9 +579,9 @@ export default function PlayersPage() {
               />
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="provincia">
-                Provincia
+                PROVINCIA
               </label>
 
               <input
@@ -593,9 +597,9 @@ export default function PlayersPage() {
               />
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="club">
-                Club
+                CLUB
               </label>
 
               <input
@@ -609,9 +613,9 @@ export default function PlayersPage() {
               />
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="annoDa">
-                Anno di nascita da
+                ANNO DA
               </label>
 
               <input
@@ -629,9 +633,9 @@ export default function PlayersPage() {
               />
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="annoA">
-                Anno di nascita a
+                ANNO A
               </label>
 
               <input
@@ -649,15 +653,15 @@ export default function PlayersPage() {
               />
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="altezzaMin">
-                Altezza minima
+                ALTEZZA MIN.
               </label>
 
               <input
                 id="altezzaMin"
                 type="number"
-                placeholder="Es. 180 cm"
+                placeholder="Es. 180"
                 min="100"
                 max="230"
                 value={altezzaMin}
@@ -669,15 +673,15 @@ export default function PlayersPage() {
               />
             </div>
 
-            <div className="profile-field">
+            <div className="players-field">
               <label htmlFor="altezzaMax">
-                Altezza massima
+                ALTEZZA MAX.
               </label>
 
               <input
                 id="altezzaMax"
                 type="number"
-                placeholder="Es. 195 cm"
+                placeholder="Es. 195"
                 min="100"
                 max="230"
                 value={altezzaMax}
@@ -689,157 +693,151 @@ export default function PlayersPage() {
               />
             </div>
           </div>
-
-          <button
-            type="button"
-            className="filter-reset"
-            onClick={resetFilters}
-          >
-            Azzera filtri
-          </button>
         </div>
 
-        <div className="players-results-header">
-          <span>
-            {players.length === PAGE_SIZE
-              ? "50+ giocatori"
-              : `${players.length} ${
-                  players.length === 1
-                    ? "giocatore trovato"
-                    : "giocatori trovati"
-                }`}
-          </span>
-        </div>
+        <div className="players-results">
+          <div className="players-results-title">
+            <span>PROFILI DISPONIBILI</span>
 
-        {message && (
-          <p className="auth-message">
-            {message}
-          </p>
-        )}
-
-        {players.length === 0 ? (
-          <div className="dashboard-card">
-            <span>
-              NESSUN RISULTATO
-            </span>
-
-            <h2>
-              Nessun giocatore trovato.
-            </h2>
-
-            <p>
-              Prova a modificare o rimuovere i
-              filtri di ricerca.
-            </p>
+            <strong>
+              {players.length === PAGE_SIZE
+                ? "50+"
+                : players.length}
+            </strong>
           </div>
-        ) : (
-          <div className="dashboard-grid">
-            {players.map((player) => {
-              const birthYear =
-                getBirthYear(
+
+          {message && (
+            <p className="auth-message">
+              {message}
+            </p>
+          )}
+
+          {players.length === 0 ? (
+            <div className="players-empty">
+              <span>NO RESULTS</span>
+
+              <h2>
+                Nessun giocatore trovato.
+              </h2>
+
+              <p>
+                Prova a modificare o rimuovere
+                i filtri di ricerca.
+              </p>
+            </div>
+          ) : (
+            <div className="players-grid">
+              {players.map((player) => {
+                const birthYear =
+                  getBirthYear(
+                    player.data_nascita
+                  );
+
+                const age = getAge(
                   player.data_nascita
                 );
 
-              const age = getAge(
-                player.data_nascita
-              );
+                const hasVideo =
+                  typeof player.video ===
+                    "string" &&
+                  player.video.trim().length > 0;
 
-              const hasVideo =
-                typeof player.video ===
-                  "string" &&
-                player.video.trim().length > 0;
+                return (
+                  <a
+                    className="player-card"
+                    key={player.id}
+                    href={`/players/${player.id}`}
+                  >
+                    <div className="player-card-top">
+                      <span className="player-role">
+                        {player.ruolo ||
+                          "GIOCATORE"}
+                      </span>
 
-              return (
-                <a
-                  className="dashboard-card"
-                  key={player.id}
-                  href={`/players/${player.id}`}
-                >
-                  <span>
-                    {player.ruolo ||
-                      "GIOCATORE"}
-                  </span>
-
-                  <h2>
-                    {player.nome || ""}{" "}
-                    {player.cognome || ""}
-                  </h2>
-
-                  <p>
-                    {player.posizione ||
-                      "Posizione non specificata"}
-                  </p>
-
-                  <p>
-                    {player.club ||
-                      "Club non specificato"}
-                  </p>
-
-                  <p>
-                    {birthYear
-                      ? `${birthYear}${
-                          age !== null
-                            ? ` · ${age} anni`
-                            : ""
-                        }`
-                      : "Anno di nascita non specificato"}
-                  </p>
-
-                  <p>
-                    {player.altezza
-                      ? `${player.altezza} cm`
-                      : "Altezza non specificata"}
-                    {" · "}
-                    {footLabel(player.piede)}
-                  </p>
-
-                  <p>
-                    {player.categoria ||
-                      "Categoria non specificata"}
-                    {player.provincia
-                      ? ` · ${player.provincia}`
-                      : ""}
-                  </p>
-
-                  {hasVideo && (
-                    <div
-                      style={{
-                        marginTop: "14px",
-                        display:
-                          "inline-flex",
-                        alignItems:
-                          "center",
-                        gap: "7px",
-                        fontSize: "11px",
-                        fontWeight: 700,
-                        letterSpacing:
-                          "0.08em",
-                        color: "#39ff88",
-                      }}
-                    >
-                      <span
-                        style={{
-                          width: "7px",
-                          height: "7px",
-                          borderRadius:
-                            "50%",
-                          background:
-                            "#39ff88",
-                          display:
-                            "inline-block",
-                        }}
-                      />
-
-                      VIDEO DISPONIBILE
+                      {hasVideo && (
+                        <span className="player-video">
+                          <i />
+                          VIDEO
+                        </span>
+                      )}
                     </div>
-                  )}
 
-                  <strong>→</strong>
-                </a>
-              );
-            })}
-          </div>
-        )}
+                    <div className="player-card-main">
+                      <h2>
+                        {player.nome || ""}
+                        <br />
+                        <strong>
+                          {player.cognome || ""}
+                        </strong>
+                      </h2>
+
+                      <p className="player-position">
+                        {player.posizione ||
+                          "Posizione non specificata"}
+                      </p>
+
+                      <p className="player-club">
+                        {player.club ||
+                          "Club non specificato"}
+                      </p>
+                    </div>
+
+                    <div className="player-card-data">
+                      <div>
+                        <span>ANNO</span>
+                        <strong>
+                          {birthYear || "—"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>ETÀ</span>
+                        <strong>
+                          {age !== null
+                            ? age
+                            : "—"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>ALTEZZA</span>
+                        <strong>
+                          {player.altezza
+                            ? `${player.altezza}`
+                            : "—"}
+                          {player.altezza
+                            ? " cm"
+                            : ""}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>PIEDE</span>
+                        <strong>
+                          {footLabel(
+                            player.piede
+                          )}
+                        </strong>
+                      </div>
+                    </div>
+
+                    <div className="player-card-bottom">
+                      <span>
+                        {player.categoria ||
+                          "Categoria —"}
+                        {player.provincia
+                          ? ` · ${player.provincia}`
+                          : ""}
+                      </span>
+
+                      <strong>↗</strong>
+                    </div>
+                  </a>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </section>
     </main>
   );
