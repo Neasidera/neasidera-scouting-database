@@ -22,7 +22,7 @@ export default function NewPlayerPage() {
   const [club, setClub] = useState("");
   const [categoria, setCategoria] = useState("");
   const [provincia, setProvincia] = useState("");
-  const [video, setVideo] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [bio, setBio] = useState("");
 
   const positionOptions =
@@ -129,6 +129,26 @@ export default function NewPlayerPage() {
         return;
       }
 
+      if (videoFile) {
+        const allowedTypes = [
+          "video/mp4",
+          "video/quicktime",
+          "video/webm",
+        ];
+
+        if (!allowedTypes.includes(videoFile.type)) {
+          throw new Error(
+            "Formato video non supportato. Usa MP4, MOV o WEBM."
+          );
+        }
+
+        if (videoFile.size > 50 * 1024 * 1024) {
+          throw new Error(
+            "Il video non può superare i 50 MB."
+          );
+        }
+      }
+
       const { data: newPlayer, error: insertError } = await supabase
         .from("players")
         .insert({
@@ -143,7 +163,7 @@ export default function NewPlayerPage() {
           club: club || null,
           categoria: categoria || null,
           provincia: provincia || null,
-          video: video || null,
+          video: null,
           bio: bio || null,
           visibile: true,
         })
@@ -158,9 +178,42 @@ export default function NewPlayerPage() {
         throw new Error("Profilo non creato.");
       }
 
+      if (videoFile) {
+        const videoPath = `${newPlayer.id}/video`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("player-videos")
+          .upload(videoPath, videoFile, {
+            contentType: videoFile.type,
+            upsert: true,
+          });
+
+        if (uploadError) {
+          throw new Error(
+            "Errore caricamento video: " + uploadError.message
+          );
+        }
+
+        const { error: videoUpdateError } = await supabase
+          .from("players")
+          .update({
+            video: videoPath,
+          })
+          .eq("id", newPlayer.id)
+          .eq("user_id", user.id);
+
+        if (videoUpdateError) {
+          throw new Error(
+            "Errore salvataggio video: " +
+              videoUpdateError.message
+          );
+        }
+      }
+
       router.replace(`/players/${newPlayer.id}`);
     } catch (err) {
       console.error(err);
+
       setError(
         err instanceof Error
           ? err.message
@@ -222,7 +275,9 @@ export default function NewPlayerPage() {
               id="dataNascita"
               type="date"
               value={dataNascita}
-              onChange={(event) => setDataNascita(event.target.value)}
+              onChange={(event) =>
+                setDataNascita(event.target.value)
+              }
             />
           </div>
 
@@ -265,7 +320,9 @@ export default function NewPlayerPage() {
               <option value="">Seleziona...</option>
               <option value="Portiere">Portiere</option>
               <option value="Difensore">Difensore</option>
-              <option value="Centrocampista">Centrocampista</option>
+              <option value="Centrocampista">
+                Centrocampista
+              </option>
               <option value="Attaccante">Attaccante</option>
             </select>
           </div>
@@ -275,7 +332,9 @@ export default function NewPlayerPage() {
             <select
               id="posizione"
               value={posizione}
-              onChange={(event) => setPosizione(event.target.value)}
+              onChange={(event) =>
+                setPosizione(event.target.value)
+              }
               disabled={!ruolo}
             >
               <option value="">
@@ -308,7 +367,9 @@ export default function NewPlayerPage() {
               id="categoria"
               type="text"
               value={categoria}
-              onChange={(event) => setCategoria(event.target.value)}
+              onChange={(event) =>
+                setCategoria(event.target.value)
+              }
             />
           </div>
 
@@ -318,19 +379,38 @@ export default function NewPlayerPage() {
               id="provincia"
               type="text"
               value={provincia}
-              onChange={(event) => setProvincia(event.target.value)}
+              onChange={(event) =>
+                setProvincia(event.target.value)
+              }
             />
           </div>
 
           <div>
-            <label htmlFor="video">Video</label>
+            <label htmlFor="videoFile">
+              Video partita / highlights
+            </label>
+
             <input
-              id="video"
-              type="url"
-              value={video}
-              onChange={(event) => setVideo(event.target.value)}
-              placeholder="https://..."
+              id="videoFile"
+              type="file"
+              accept="video/mp4,video/quicktime,video/webm"
+              onChange={(event) =>
+                setVideoFile(
+                  event.target.files?.[0] ?? null
+                )
+              }
             />
+
+            <small>
+              MP4, MOV o WEBM · massimo 50 MB
+            </small>
+
+            {videoFile && (
+              <p>
+                File selezionato:{" "}
+                <strong>{videoFile.name}</strong>
+              </p>
+            )}
           </div>
 
           <div>
