@@ -78,6 +78,12 @@ export default function PlayerDetailPage() {
     useState(false);
   const [message, setMessage] = useState("");
 
+  // VIDEO
+  const [videoUrl, setVideoUrl] =
+    useState<string | null>(null);
+  const [videoLoading, setVideoLoading] =
+    useState(false);
+
   // SCHEDA TECNICA
   const [hasTechnicalSheet, setHasTechnicalSheet] =
     useState(false);
@@ -122,6 +128,7 @@ export default function PlayerDetailPage() {
     async function loadPlayer() {
       setLoading(true);
       setMessage("");
+      setVideoUrl(null);
 
       const {
         data: { user },
@@ -166,6 +173,40 @@ export default function PlayerDetailPage() {
       }
 
       setPlayer(data);
+
+      // VIDEO
+      if (data.video) {
+        setVideoLoading(true);
+
+        if (
+          data.video.startsWith("http://") ||
+          data.video.startsWith("https://")
+        ) {
+          // Compatibilità con eventuali vecchi video esterni
+          setVideoUrl(data.video);
+        } else {
+          // Video caricato nel bucket privato player-videos
+          const {
+            data: signedVideo,
+            error: videoError,
+          } = await supabase.storage
+            .from("player-videos")
+            .createSignedUrl(data.video, 60 * 60);
+
+          if (
+            !videoError &&
+            signedVideo?.signedUrl
+          ) {
+            setVideoUrl(signedVideo.signedUrl);
+          } else {
+            setVideoUrl(null);
+          }
+        }
+
+        setVideoLoading(false);
+      } else {
+        setVideoLoading(false);
+      }
 
       // Carica contatti.
       // Le RLS decidono automaticamente se l'utente
@@ -683,7 +724,7 @@ export default function PlayerDetailPage() {
     let age =
       today.getFullYear() -
       birthDate.getFullYear();
-    
+
     const monthDifference =
       today.getMonth() -
       birthDate.getMonth();
@@ -997,34 +1038,42 @@ export default function PlayerDetailPage() {
             <span className={styles.sectionLabel}>
               VIDEO
             </span>
+
             <h2>Video del giocatore</h2>
           </div>
 
-          {player.video ? (
-            <a
-              href={player.video}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.videoButton}
+          {videoLoading ? (
+            <div className={styles.emptyVideo}>
+              <span>CARICAMENTO VIDEO</span>
+
+              <p>
+                Preparazione del video...
+              </p>
+            </div>
+          ) : videoUrl ? (
+            <div
+              style={{
+                marginTop: "24px",
+              }}
             >
-              <span className={styles.playIcon}>
-                ▶
-              </span>
-
-              <span>
-                <strong>Guarda il video</strong>
-                <small>
-                  Apri il video del giocatore
-                </small>
-              </span>
-
-              <span className={styles.videoArrow}>
-                →
-              </span>
-            </a>
+              <video
+                src={videoUrl}
+                controls
+                playsInline
+                preload="metadata"
+                style={{
+                  display: "block",
+                  width: "100%",
+                  maxWidth: "100%",
+                  borderRadius: "14px",
+                  background: "#000",
+                }}
+              />
+            </div>
           ) : (
             <div className={styles.emptyVideo}>
               <span>VIDEO NON DISPONIBILE</span>
+
               <p>
                 Questo giocatore non ha ancora
                 inserito un video.
@@ -1037,7 +1086,7 @@ export default function PlayerDetailPage() {
         {/* SCHEDA TECNICA             */}
         {/* ========================= */}
 
-     {!hasTechnicalSheet && (
+        {!hasTechnicalSheet && (
           <section className={styles.card}>
             <div className={styles.cardHeader}>
               <span className={styles.sectionLabel}>
