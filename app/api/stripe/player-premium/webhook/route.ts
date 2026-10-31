@@ -61,7 +61,10 @@ export async function POST(request: Request) {
 
     const userId = subscription.metadata?.user_id;
 
-    if (!userId || subscription.metadata?.product !== "player_premium") {
+    if (
+      !userId ||
+      subscription.metadata?.product !== "player_premium"
+    ) {
       return NextResponse.json({ received: true });
     }
 
@@ -89,8 +92,9 @@ export async function POST(request: Request) {
         ? subscription.customer
         : subscription.customer.id;
 
-    const priceId =
-      subscription.items.data[0]?.price.id ?? null;
+    const subscriptionItem = subscription.items.data[0];
+
+    const priceId = subscriptionItem?.price.id ?? null;
 
     const allowedStatuses = [
       "active",
@@ -114,19 +118,26 @@ export async function POST(request: Request) {
           stripe_customer_id: customerId,
           stripe_subscription_id: subscription.id,
           stripe_price_id: priceId,
+
           status,
-          current_period_start: subscription.current_period_start
-            ? new Date(
-                subscription.current_period_start * 1000
-              ).toISOString()
-            : null,
-          current_period_end: subscription.current_period_end
-            ? new Date(
-                subscription.current_period_end * 1000
-              ).toISOString()
-            : null,
+
+          current_period_start:
+            subscriptionItem?.current_period_start
+              ? new Date(
+                  subscriptionItem.current_period_start * 1000
+                ).toISOString()
+              : null,
+
+          current_period_end:
+            subscriptionItem?.current_period_end
+              ? new Date(
+                  subscriptionItem.current_period_end * 1000
+                ).toISOString()
+              : null,
+
           cancel_at_period_end:
             subscription.cancel_at_period_end,
+
           updated_at: new Date().toISOString(),
         },
         { onConflict: "user_id" }
