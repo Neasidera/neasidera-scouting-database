@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -103,10 +104,103 @@ function getAge(date: string | null) {
   return age >= 0 ? age : null;
 }
 
+function PlayerCard({
+  player,
+  premium = false,
+}: {
+  player: Player;
+  premium?: boolean;
+}) {
+  const birthYear = getBirthYear(player.data_nascita);
+  const age = getAge(player.data_nascita);
+
+  const hasVideo =
+    typeof player.video === "string" &&
+    player.video.trim().length > 0;
+
+  return (
+    <a
+      className="player-card"
+      key={player.id}
+      href={`/players/${player.id}`}
+    >
+      <div className="player-card-top">
+        <span className="player-role">
+          {player.ruolo || "GIOCATORE"}
+        </span>
+
+        {hasVideo && (
+          <span className="player-video">
+            <i />
+            VIDEO
+          </span>
+        )}
+      </div>
+
+      <div className="player-card-main">
+        <h2>
+          {player.nome || ""}
+          <br />
+          <strong>{player.cognome || ""}</strong>
+        </h2>
+
+        <p className="player-position">
+          {player.posizione || "Posizione non specificata"}
+        </p>
+
+        <p className="player-club">
+          {player.club || "Club non specificato"}
+        </p>
+
+        {premium && (
+          <span className="premiumBadge">
+            ✦ NEASIDERA PREMIUM
+          </span>
+        )}
+      </div>
+
+      <div className="player-card-data">
+        <div>
+          <span>ANNO</span>
+          <strong>{birthYear || "—"}</strong>
+        </div>
+
+        <div>
+          <span>ETÀ</span>
+          <strong>{age !== null ? age : "—"}</strong>
+        </div>
+
+        <div>
+          <span>ALTEZZA</span>
+          <strong>
+            {player.altezza ? `${player.altezza}` : "—"}
+            {player.altezza ? " cm" : ""}
+          </strong>
+        </div>
+
+        <div>
+          <span>PIEDE</span>
+          <strong>{footLabel(player.piede)}</strong>
+        </div>
+      </div>
+
+      <div className="player-card-bottom">
+        <span>
+          {player.categoria || "Categoria —"}
+          {player.provincia ? ` · ${player.provincia}` : ""}
+        </span>
+
+        <strong>↗</strong>
+      </div>
+    </a>
+  );
+}
+
 export default function PlayersPage() {
   const supabase = createClient();
 
   const [players, setPlayers] = useState<Player[]>([]);
+  const [premiumPlayers, setPremiumPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -162,8 +256,7 @@ export default function PlayersPage() {
         return;
       }
 
-      const ruoloAccount =
-        profile?.ruolo_account;
+      const ruoloAccount = profile?.ruolo_account;
 
       if (ruoloAccount === "Calciatore") {
         const {
@@ -187,8 +280,7 @@ export default function PlayersPage() {
         }
 
         if (ownPlayer?.id) {
-          window.location.href =
-            `/players/${ownPlayer.id}`;
+          window.location.href = `/players/${ownPlayer.id}`;
           return;
         }
 
@@ -244,9 +336,7 @@ export default function PlayersPage() {
         .range(0, PAGE_SIZE - 1);
 
       if (search.trim()) {
-        const term = search
-          .trim()
-          .replace(/,/g, " ");
+        const term = search.trim().replace(/,/g, " ");
 
         query = query.or(
           `nome.ilike.%${term}%,cognome.ilike.%${term}%,club.ilike.%${term}%,ruolo.ilike.%${term}%,provincia.ilike.%${term}%`
@@ -258,10 +348,7 @@ export default function PlayersPage() {
       }
 
       if (posizione) {
-        query = query.eq(
-          "posizione",
-          posizione
-        );
+        query = query.eq("posizione", posizione);
       }
 
       if (piede) {
@@ -356,6 +443,44 @@ export default function PlayersPage() {
     supabase,
   ]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPremiumPlayers() {
+      try {
+        const response = await fetch("/api/players/premium");
+
+        if (!response.ok) {
+          if (!cancelled) {
+            setPremiumPlayers([]);
+          }
+          return;
+        }
+
+        const data = await response.json();
+
+        if (!cancelled) {
+          setPremiumPlayers(data.players || []);
+        }
+      } catch (error) {
+        console.error(
+          "Errore caricamento Premium:",
+          error
+        );
+
+        if (!cancelled) {
+          setPremiumPlayers([]);
+        }
+      }
+    }
+
+    loadPremiumPlayers();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   function handleRuoloChange(value: string) {
     setRuolo(value);
     setPosizione("");
@@ -402,8 +527,7 @@ export default function PlayersPage() {
             type="button"
             onClick={async () => {
               await supabase.auth.signOut();
-              window.location.href =
-                "/login";
+              window.location.href = "/login";
             }}
           >
             Esci
@@ -467,49 +591,31 @@ export default function PlayersPage() {
 
           <div className="players-filter-grid">
             <div className="players-field">
-              <label htmlFor="ruolo">
-                RUOLO
-              </label>
+              <label htmlFor="ruolo">RUOLO</label>
 
               <select
                 id="ruolo"
                 value={ruolo}
                 onChange={(event) =>
-                  handleRuoloChange(
-                    event.target.value
-                  )
+                  handleRuoloChange(event.target.value)
                 }
               >
-                <option value="">
-                  Tutti i ruoli
-                </option>
-                <option value="Portiere">
-                  Portiere
-                </option>
-                <option value="Difensore">
-                  Difensore
-                </option>
-                <option value="Centrocampista">
-                  Centrocampista
-                </option>
-                <option value="Attaccante">
-                  Attaccante
-                </option>
+                <option value="">Tutti i ruoli</option>
+                <option value="Portiere">Portiere</option>
+                <option value="Difensore">Difensore</option>
+                <option value="Centrocampista">Centrocampista</option>
+                <option value="Attaccante">Attaccante</option>
               </select>
             </div>
 
             <div className="players-field">
-              <label htmlFor="posizione">
-                POSIZIONE
-              </label>
+              <label htmlFor="posizione">POSIZIONE</label>
 
               <select
                 id="posizione"
                 value={posizione}
                 onChange={(event) =>
-                  setPosizione(
-                    event.target.value
-                  )
+                  setPosizione(event.target.value)
                 }
                 disabled={!ruolo}
               >
@@ -519,52 +625,33 @@ export default function PlayersPage() {
                     : "Seleziona prima il ruolo"}
                 </option>
 
-                {positionOptions.map(
-                  (option) => (
-                    <option
-                      key={option}
-                      value={option}
-                    >
-                      {option}
-                    </option>
-                  )
-                )}
+                {positionOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
               </select>
             </div>
 
             <div className="players-field">
-              <label htmlFor="piede">
-                PIEDE
-              </label>
+              <label htmlFor="piede">PIEDE</label>
 
               <select
                 id="piede"
                 value={piede}
                 onChange={(event) =>
-                  setPiede(
-                    event.target.value
-                  )
+                  setPiede(event.target.value)
                 }
               >
-                <option value="">
-                  Tutti
-                </option>
-                <option value="right">
-                  Destro
-                </option>
-                <option value="left">
-                  Sinistro
-                </option>
-                <option value="both">
-                  Ambidestro
-                </option>
+                <option value="">Tutti</option>
+                <option value="right">Destro</option>
+                <option value="left">Sinistro</option>
+                <option value="both">Ambidestro</option>
               </select>
             </div>
 
             <div className="players-field">
-              <label htmlFor="categoria">
-                CATEGORIA
-              </label>
+              <label htmlFor="categoria">CATEGORIA</label>
 
               <input
                 id="categoria"
@@ -572,17 +659,13 @@ export default function PlayersPage() {
                 placeholder="Es. U17, U19..."
                 value={categoria}
                 onChange={(event) =>
-                  setCategoria(
-                    event.target.value
-                  )
+                  setCategoria(event.target.value)
                 }
               />
             </div>
 
             <div className="players-field">
-              <label htmlFor="provincia">
-                PROVINCIA
-              </label>
+              <label htmlFor="provincia">PROVINCIA</label>
 
               <input
                 id="provincia"
@@ -590,17 +673,13 @@ export default function PlayersPage() {
                 placeholder="Es. Milano..."
                 value={provincia}
                 onChange={(event) =>
-                  setProvincia(
-                    event.target.value
-                  )
+                  setProvincia(event.target.value)
                 }
               />
             </div>
 
             <div className="players-field">
-              <label htmlFor="club">
-                CLUB
-              </label>
+              <label htmlFor="club">CLUB</label>
 
               <input
                 id="club"
@@ -614,9 +693,7 @@ export default function PlayersPage() {
             </div>
 
             <div className="players-field">
-              <label htmlFor="annoDa">
-                ANNO DA
-              </label>
+              <label htmlFor="annoDa">ANNO DA</label>
 
               <input
                 id="annoDa"
@@ -626,17 +703,13 @@ export default function PlayersPage() {
                 max="2030"
                 value={annoDa}
                 onChange={(event) =>
-                  setAnnoDa(
-                    event.target.value
-                  )
+                  setAnnoDa(event.target.value)
                 }
               />
             </div>
 
             <div className="players-field">
-              <label htmlFor="annoA">
-                ANNO A
-              </label>
+              <label htmlFor="annoA">ANNO A</label>
 
               <input
                 id="annoA"
@@ -646,17 +719,13 @@ export default function PlayersPage() {
                 max="2030"
                 value={annoA}
                 onChange={(event) =>
-                  setAnnoA(
-                    event.target.value
-                  )
+                  setAnnoA(event.target.value)
                 }
               />
             </div>
 
             <div className="players-field">
-              <label htmlFor="altezzaMin">
-                ALTEZZA MIN.
-              </label>
+              <label htmlFor="altezzaMin">ALTEZZA MIN.</label>
 
               <input
                 id="altezzaMin"
@@ -666,17 +735,13 @@ export default function PlayersPage() {
                 max="230"
                 value={altezzaMin}
                 onChange={(event) =>
-                  setAltezzaMin(
-                    event.target.value
-                  )
+                  setAltezzaMin(event.target.value)
                 }
               />
             </div>
 
             <div className="players-field">
-              <label htmlFor="altezzaMax">
-                ALTEZZA MAX.
-              </label>
+              <label htmlFor="altezzaMax">ALTEZZA MAX.</label>
 
               <input
                 id="altezzaMax"
@@ -686,14 +751,36 @@ export default function PlayersPage() {
                 max="230"
                 value={altezzaMax}
                 onChange={(event) =>
-                  setAltezzaMax(
-                    event.target.value
-                  )
+                  setAltezzaMax(event.target.value)
                 }
               />
             </div>
           </div>
         </div>
+
+        {premiumPlayers.length > 0 && (
+          <div className="players-results">
+            <div className="players-results-title">
+              <span>✦ NEASIDERA PREMIUM</span>
+              <strong>{premiumPlayers.length}</strong>
+            </div>
+
+            <p>
+              Profili in evidenza dei calciatori
+              che hanno scelto NeaSidera Premium.
+            </p>
+
+            <div className="players-grid">
+              {premiumPlayers.map((player) => (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                  premium
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="players-results">
           <div className="players-results-title">
@@ -716,9 +803,7 @@ export default function PlayersPage() {
             <div className="players-empty">
               <span>NO RESULTS</span>
 
-              <h2>
-                Nessun giocatore trovato.
-              </h2>
+              <h2>Nessun giocatore trovato.</h2>
 
               <p>
                 Prova a modificare o rimuovere
@@ -727,114 +812,12 @@ export default function PlayersPage() {
             </div>
           ) : (
             <div className="players-grid">
-              {players.map((player) => {
-                const birthYear =
-                  getBirthYear(
-                    player.data_nascita
-                  );
-
-                const age = getAge(
-                  player.data_nascita
-                );
-
-                const hasVideo =
-                  typeof player.video ===
-                    "string" &&
-                  player.video.trim().length > 0;
-
-                return (
-                  <a
-                    className="player-card"
-                    key={player.id}
-                    href={`/players/${player.id}`}
-                  >
-                    <div className="player-card-top">
-                      <span className="player-role">
-                        {player.ruolo ||
-                          "GIOCATORE"}
-                      </span>
-
-                      {hasVideo && (
-                        <span className="player-video">
-                          <i />
-                          VIDEO
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="player-card-main">
-                      <h2>
-                        {player.nome || ""}
-                        <br />
-                        <strong>
-                          {player.cognome || ""}
-                        </strong>
-                      </h2>
-
-                      <p className="player-position">
-                        {player.posizione ||
-                          "Posizione non specificata"}
-                      </p>
-
-                      <p className="player-club">
-                        {player.club ||
-                          "Club non specificato"}
-                      </p>
-                    </div>
-
-                    <div className="player-card-data">
-                      <div>
-                        <span>ANNO</span>
-                        <strong>
-                          {birthYear || "—"}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>ETÀ</span>
-                        <strong>
-                          {age !== null
-                            ? age
-                            : "—"}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>ALTEZZA</span>
-                        <strong>
-                          {player.altezza
-                            ? `${player.altezza}`
-                            : "—"}
-                          {player.altezza
-                            ? " cm"
-                            : ""}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>PIEDE</span>
-                        <strong>
-                          {footLabel(
-                            player.piede
-                          )}
-                        </strong>
-                      </div>
-                    </div>
-
-                    <div className="player-card-bottom">
-                      <span>
-                        {player.categoria ||
-                          "Categoria —"}
-                        {player.provincia
-                          ? ` · ${player.provincia}`
-                          : ""}
-                      </span>
-
-                      <strong>↗</strong>
-                    </div>
-                  </a>
-                );
-              })}
+              {players.map((player) => (
+                <PlayerCard
+                  key={player.id}
+                  player={player}
+                />
+              ))}
             </div>
           )}
         </div>
