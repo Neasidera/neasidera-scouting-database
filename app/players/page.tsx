@@ -217,6 +217,15 @@ export default function PlayersPage() {
   const [altezzaMax, setAltezzaMax] = useState("");
 
   const positionOptions = getPositionOptions(ruolo);
+  const premiumPlayerIds = new Set(
+  premiumPlayers.map((player) => player.id)
+);
+
+const orderedPlayers = [...players].sort(
+  (a, b) =>
+    Number(premiumPlayerIds.has(b.id)) -
+    Number(premiumPlayerIds.has(a.id))
+);
 
   useEffect(() => {
     let cancelled = false;
@@ -812,7 +821,7 @@ export default function PlayersPage() {
             </div>
           ) : (
             <div className="players-grid">
-              {players.map((player) => (
+              {orderedPlayers.map((player) => (
                 <PlayerCard
                   key={player.id}
                   player={player}
