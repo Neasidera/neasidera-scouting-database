@@ -61,6 +61,7 @@ export default function PlayerDetailPage() {
   const supabase = createClient();
 
   const [player, setPlayer] = useState<Player | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [contacts, setContacts] =
     useState<PlayerContacts | null>(null);
 
@@ -173,6 +174,23 @@ export default function PlayerDetailPage() {
       }
 
       setPlayer(data);
+
+      // Verifica lo stato Premium del giocatore
+      try {
+        const premiumResponse = await fetch(
+          `/api/players/${playerId}/premium`
+        );
+
+        if (premiumResponse.ok) {
+          const premiumData = await premiumResponse.json();
+          setIsPremium(premiumData.premium === true);
+        } else {
+          setIsPremium(false);
+        }
+      } catch (error) {
+        console.error("Errore verifica Premium:", error);
+        setIsPremium(false);
+      }
 
       // VIDEO
       if (data.video) {
@@ -862,6 +880,12 @@ export default function PlayerDetailPage() {
                 player.ruolo ??
                 "GIOCATORE"}
             </span>
+
+            {isPremium && (
+              <span className={styles.premiumBadge}>
+                ✦ NEASIDERA PREMIUM
+              </span>
+            )}
 
             <h1>
               {player.nome ?? ""}
