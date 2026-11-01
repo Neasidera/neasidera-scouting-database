@@ -4174,3 +4174,203 @@ footer {
     font-size: 7px;
   }
 }
+
+/* NEASIDERA PREMIUM DASHBOARD */
+
+.dashboard-premium {
+  position: relative;
+  margin-top: 65px;
+  padding: 48px;
+  max-width: 950px;
+  border: 1px solid rgba(140, 255, 0, 0.3);
+  background:
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(140, 255, 0, 0.09),
+      transparent 35%
+    ),
+    linear-gradient(145deg, #111, #080808);
+}
+
+.dashboard-premium-eyebrow {
+  color: #9cff35;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.dashboard-premium h2 {
+  margin-top: 25px;
+  color: #fff;
+  font-size: clamp(35px, 5vw, 58px);
+  line-height: 1.05;
+  letter-spacing: -2px;
+}
+
+.dashboard-premium h2 strong {
+  color: #9cff35;
+}
+
+.dashboard-premium > p {
+  max-width: 650px;
+  margin-top: 20px;
+  color: #999;
+  line-height: 1.7;
+}
+
+.dashboard-premium-benefits {
+  display: grid;
+  gap: 14px;
+  margin-top: 32px;
+}
+
+.dashboard-premium-benefits > div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.dashboard-premium-benefits span {
+  color: #9cff35;
+  font-size: 18px;
+}
+
+.dashboard-premium-benefits p {
+  color: #ddd;
+  font-size: 14px;
+}
+
+.dashboard-premium-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 35px;
+}
+
+.dashboard-premium-price strong {
+  color: #fff;
+  font-size: 43px;
+}
+
+.dashboard-premium-price span {
+  color: #999;
+  font-size: 14px;
+}
+
+.dashboard-premium .dashboard-premium-note {
+  margin-top: 5px;
+  font-size: 12px;
+  color: #777;
+}
+
+.dashboard-premium-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-top: 30px;
+}
+
+.dashboard-premium-button {
+  padding: 17px 27px;
+  border: 1px solid #9cff35;
+  background: #9cff35;
+  color: #080808;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.dashboard-premium-button:hover {
+  background: #b5ff69;
+}
+
+.dashboard-premium-button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.dashboard-premium-free {
+  border: none;
+  background: transparent;
+  color: #888;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.dashboard-premium-free:hover {
+  color: #fff;
+}
+
+.dashboard-premium-error {
+  color: #ff7777 !important;
+  font-size: 13px;
+}
+
+.dashboard-premium-active {
+  margin-top: 55px;
+  padding: 30px;
+  border: 1px solid rgba(140, 255, 0, 0.3);
+  background: rgba(140, 255, 0, 0.045);
+}
+
+.dashboard-premium-active > span {
+  color: #9cff35;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.dashboard-premium-active p {
+  margin-top: 12px;
+  color: #aaa;
+}
+
+.dashboard-premium-active button,
+.dashboard-premium-cta button {
+  margin-top: 20px;
+  padding: 12px 18px;
+  border: 1px solid #9cff35;
+  background: transparent;
+  color: #9cff35;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+
+.dashboard-premium-active button:hover,
+.dashboard-premium-cta button:hover {
+  background: rgba(140, 255, 0, 0.1);
+}
+
+.dashboard-premium-cta {
+  cursor: default;
+}
+
+.dashboard-premium-cta button {
+  position: relative;
+  z-index: 3;
+  align-self: flex-start;
+}
+
+@media (max-width: 700px) {
+  .dashboard-premium {
+    margin-top: 45px;
+    padding: 28px 22px;
+  }
+
+  .dashboard-premium h2 {
+    letter-spacing: -1px;
+  }
+
+  .dashboard-premium-actions {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-premium-button {
+    width: 100%;
+  }
+}
