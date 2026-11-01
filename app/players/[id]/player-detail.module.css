@@ -751,3 +751,17 @@
     padding: 26px 20px;
   }
 }
+.premiumBadge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  margin: 0 0 22px 8px;
+  padding: 0 12px;
+  border: 1px solid #8cff00;
+  background: rgba(140, 255, 0, 0.09);
+  color: #8cff00;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
