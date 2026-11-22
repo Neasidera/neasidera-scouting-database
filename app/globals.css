@@ -4374,3 +4374,188 @@ footer {
     width: 100%;
   }
 }
+
+
+/* =========================================================
+   DASHBOARD PALETTE EXPERIMENT — MIDNIGHT / ICE / LAVENDER
+   Scoped to the dashboard: the rest of the product is unchanged.
+   ========================================================= */
+
+.dashboard-page {
+  --dash-bg: #080f1b;
+  --dash-surface: #101b2b;
+  --dash-surface-raised: #142237;
+  --dash-border: rgba(166, 195, 222, 0.14);
+  --dash-text: #edf4fb;
+  --dash-muted: #9aacc0;
+  --dash-soft: #6f8299;
+  --dash-accent: #63d9ed;
+  --dash-accent-strong: #9aeaf5;
+  --dash-secondary: #b4a5ff;
+  background:
+    radial-gradient(circle at 84% 12%, rgba(99, 217, 237, 0.12), transparent 30%),
+    radial-gradient(circle at 8% 78%, rgba(180, 165, 255, 0.075), transparent 28%),
+    linear-gradient(145deg, #080f1b 0%, #0a1422 58%, #0b1220 100%);
+  color: var(--dash-text);
+}
+
+.dashboard-page::before {
+  opacity: 0.22;
+  background-image:
+    linear-gradient(rgba(176, 207, 232, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(176, 207, 232, 0.035) 1px, transparent 1px);
+}
+
+.dashboard-header {
+  border-bottom-color: var(--dash-border);
+  background: rgba(8, 15, 27, 0.78);
+}
+
+.dashboard-logo span,
+.dashboard-welcome > span,
+.dashboard-welcome > span::before,
+.dashboard-welcome h1 strong,
+.dashboard-card > span,
+.dashboard-card > strong,
+.dashboard-loading::after {
+  color: var(--dash-accent);
+}
+
+.dashboard-welcome > span::before {
+  background: var(--dash-accent);
+  box-shadow: 0 0 12px rgba(99, 217, 237, 0.38);
+}
+
+.dashboard-user > span,
+.dashboard-welcome p {
+  color: var(--dash-muted);
+}
+
+.dashboard-user button {
+  border-color: var(--dash-border);
+  border-radius: 7px;
+  color: #c7d5e4;
+}
+
+.dashboard-user button:hover {
+  border-color: rgba(99, 217, 237, 0.5);
+  background: rgba(99, 217, 237, 0.08);
+  color: var(--dash-accent-strong);
+}
+
+.dashboard-card {
+  min-height: 285px;
+  border-color: var(--dash-border);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.012)),
+    rgba(16, 27, 43, 0.82);
+  box-shadow: 0 16px 42px rgba(0, 0, 0, 0.12);
+}
+
+.dashboard-card::before {
+  background: linear-gradient(90deg, var(--dash-accent), var(--dash-secondary));
+  box-shadow: 0 0 18px rgba(99, 217, 237, 0.28);
+}
+
+.dashboard-card::after {
+  background: rgba(99, 217, 237, 0.09);
+}
+
+.dashboard-card:hover {
+  border-color: rgba(99, 217, 237, 0.42);
+  background:
+    linear-gradient(145deg, rgba(99, 217, 237, 0.075), rgba(180, 165, 255, 0.035)),
+    var(--dash-surface-raised);
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.24);
+}
+
+.dashboard-card > span {
+  letter-spacing: 0.16em;
+}
+
+.dashboard-card h2 {
+  color: var(--dash-text);
+}
+
+.dashboard-card p {
+  color: var(--dash-muted);
+}
+
+.dashboard-card:hover > strong {
+  color: var(--dash-accent-strong);
+}
+
+/* Premium panel follows the new palette without changing its offer or flow. */
+.dashboard-premium {
+  border-color: rgba(99, 217, 237, 0.3);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 92% 8%, rgba(180, 165, 255, 0.12), transparent 34%),
+    linear-gradient(145deg, #142237, #0d1726);
+  box-shadow: 0 24px 65px rgba(0, 0, 0, 0.2);
+}
+
+.dashboard-premium-eyebrow,
+.dashboard-premium h2 strong,
+.dashboard-premium-benefits span,
+.dashboard-premium-active > span {
+  color: var(--dash-accent);
+}
+
+.dashboard-premium > p,
+.dashboard-premium .dashboard-premium-note,
+.dashboard-premium-price span,
+.dashboard-premium-active p {
+  color: var(--dash-muted);
+}
+
+.dashboard-premium-benefits p {
+  color: #d7e3ef;
+}
+
+.dashboard-premium-button {
+  border-color: var(--dash-accent);
+  border-radius: 7px;
+  background: var(--dash-accent);
+  color: #07121e;
+}
+
+.dashboard-premium-button:hover {
+  background: var(--dash-accent-strong);
+}
+
+.dashboard-premium-free {
+  color: var(--dash-muted);
+}
+
+.dashboard-premium-free:hover {
+  color: var(--dash-text);
+}
+
+.dashboard-premium-active {
+  border-color: rgba(99, 217, 237, 0.28);
+  border-radius: 12px;
+  background: rgba(99, 217, 237, 0.055);
+}
+
+.dashboard-premium-active button,
+.dashboard-premium-cta button {
+  border-color: rgba(99, 217, 237, 0.55);
+  border-radius: 7px;
+  color: var(--dash-accent);
+}
+
+.dashboard-premium-active button:hover,
+.dashboard-premium-cta button:hover {
+  background: rgba(99, 217, 237, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-card,
+  .dashboard-card::before,
+  .dashboard-card::after,
+  .dashboard-user button {
+    transition: none;
+  }
+}
