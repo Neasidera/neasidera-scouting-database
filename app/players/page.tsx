@@ -220,15 +220,6 @@ export default function PlayersPage() {
   const [altezzaMax, setAltezzaMax] = useState("");
 
   const positionOptions = getPositionOptions(ruolo);
-  const premiumPlayerIds = new Set(
-  premiumPlayers.map((player) => player.id)
-);
-
-const orderedPlayers = [...players].sort(
-  (a, b) =>
-    Number(premiumPlayerIds.has(b.id)) -
-    Number(premiumPlayerIds.has(a.id))
-);
 
   const hasActiveFilters = Boolean(
     search.trim() ||
