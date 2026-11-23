@@ -203,6 +203,10 @@ export default function PlayersPage() {
   const [premiumPlayers, setPremiumPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [accessReady, setAccessReady] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [sortBy, setSortBy] = useState("recent");
 
   const [search, setSearch] = useState("");
   const [ruolo, setRuolo] = useState("");
@@ -217,23 +221,42 @@ export default function PlayersPage() {
   const [altezzaMax, setAltezzaMax] = useState("");
 
   const positionOptions = getPositionOptions(ruolo);
+
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+    ruolo ||
+    posizione ||
+    piede ||
+    categoria.trim() ||
+    provincia.trim() ||
+    club.trim() ||
+    annoDa ||
+    annoA ||
+    altezzaMin ||
+    altezzaMax
+  );
+
   const premiumPlayerIds = new Set(
-  premiumPlayers.map((player) => player.id)
-);
+    premiumPlayers.map((player) => player.id)
+  );
 
-const orderedPlayers = [...players].sort(
-  (a, b) =>
-    Number(premiumPlayerIds.has(b.id)) -
-    Number(premiumPlayerIds.has(a.id))
-);
+  const orderedPlayers =
+    sortBy === "recent"
+      ? [...players].sort(
+          (a, b) =>
+            Number(premiumPlayerIds.has(b.id)) -
+            Number(premiumPlayerIds.has(a.id))
+        )
+      : players;
 
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  // Verifica accesso una sola volta: non ripetere auth e abbonamento
+  // a ogni modifica dei filtri o cambio pagina.
   useEffect(() => {
     let cancelled = false;
 
-    const timeout = window.setTimeout(async () => {
-      setLoading(true);
-      setMessage("");
-
+    async function checkAccess() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -258,8 +281,7 @@ const orderedPlayers = [...players].sort(
 
       if (profileError) {
         setMessage(
-          "Errore verifica account: " +
-            profileError.message
+          "Errore verifica account: " + profileError.message
         );
         setLoading(false);
         return;
@@ -333,16 +355,80 @@ const orderedPlayers = [...players].sort(
         return;
       }
 
+      setAccessReady(true);
+    }
+
+    checkAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
+
+  // Ogni nuova ricerca riparte dalla prima pagina.
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [
+    search,
+    sortBy,
+    ruolo,
+    posizione,
+    piede,
+    categoria,
+    provincia,
+    club,
+    annoDa,
+    annoA,
+    altezzaMin,
+    altezzaMax,
+  ]);
+
+  // Recupera solo la pagina richiesta e il conteggio esatto dei risultati.
+  useEffect(() => {
+    if (!accessReady) return;
+
+    let cancelled = false;
+
+    const timeout = window.setTimeout(async () => {
+      setLoading(true);
+      setMessage("");
+
       let query = supabase
         .from("players")
         .select(
-          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, visibile"
+          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, visibile",
+          { count: "exact" }
         )
-        .eq("visibile", true)
-        .order("created_at", {
-          ascending: false,
-        })
-        .range(0, PAGE_SIZE - 1);
+        .eq("visibile", true);
+
+      // Ordina nel database prima della paginazione, per mantenere
+      // un ordine coerente anche passando da una pagina all’altra.
+      if (sortBy === "youngest") {
+        query = query.order("data_nascita", { ascending: false, nullsFirst: false });
+      } else if (sortBy === "oldest") {
+        query = query.order("data_nascita", { ascending: true, nullsFirst: false });
+      } else if (sortBy === "tallest") {
+        query = query.order("altezza", { ascending: false, nullsFirst: false });
+      } else if (sortBy === "shortest") {
+        query = query.order("altezza", { ascending: true, nullsFirst: false });
+      } else {
+        query = query.order("created_at", { ascending: false });
+      }
+
+      query = query.range(
+        currentPage * PAGE_SIZE,
+        (currentPage + 1) * PAGE_SIZE - 1
+      );
+
+      // A filtri vuoti, i profili già mostrati nella sezione Premium
+      // vengono esclusi dalla lista ordinaria per evitare duplicati.
+      if (!hasActiveFilters && premiumPlayerIds.size > 0) {
+        query = query.not(
+          "id",
+          "in",
+          `(${Array.from(premiumPlayerIds).join(",")})`
+        );
+      }
 
       if (search.trim()) {
         const term = search.trim().replace(/,/g, " ");
@@ -413,21 +499,19 @@ const orderedPlayers = [...players].sort(
         );
       }
 
-      const {
-        data,
-        error,
-      } = await query;
+      const { data, error, count } = await query;
 
       if (cancelled) return;
 
       if (error) {
         setMessage(
-          "Errore caricamento giocatori: " +
-            error.message
+          "Errore caricamento giocatori: " + error.message
         );
         setPlayers([]);
+        setTotalCount(0);
       } else {
         setPlayers(data || []);
+        setTotalCount(count ?? data?.length ?? 0);
       }
 
       setLoading(false);
@@ -438,6 +522,9 @@ const orderedPlayers = [...players].sort(
       window.clearTimeout(timeout);
     };
   }, [
+    accessReady,
+    currentPage,
+    sortBy,
     search,
     ruolo,
     posizione,
@@ -449,6 +536,7 @@ const orderedPlayers = [...players].sort(
     annoA,
     altezzaMin,
     altezzaMax,
+    premiumPlayers,
     supabase,
   ]);
 
@@ -767,7 +855,7 @@ const orderedPlayers = [...players].sort(
           </div>
         </div>
 
-        {premiumPlayers.length > 0 && (
+        {!hasActiveFilters && premiumPlayers.length > 0 && (
           <div className="players-results">
             <div className="players-results-title">
               <span>✦ NEASIDERA PREMIUM</span>
@@ -795,11 +883,22 @@ const orderedPlayers = [...players].sort(
           <div className="players-results-title">
             <span>PROFILI DISPONIBILI</span>
 
-            <strong>
-              {players.length === PAGE_SIZE
-                ? "50+"
-                : players.length}
-            </strong>
+            <strong>{totalCount}</strong>
+          </div>
+
+          <div className="players-field" style={{ maxWidth: "240px", margin: "0 0 20px auto" }}>
+            <label htmlFor="sortBy">ORDINA PER</label>
+            <select
+              id="sortBy"
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+            >
+              <option value="recent">Più recenti</option>
+              <option value="youngest">Più giovani</option>
+              <option value="oldest">Più grandi</option>
+              <option value="tallest">Più alti</option>
+              <option value="shortest">Più bassi</option>
+            </select>
           </div>
 
           {message && (
@@ -827,6 +926,45 @@ const orderedPlayers = [...players].sort(
                   player={player}
                 />
               ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div
+              className="players-pagination"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "16px",
+                marginTop: "28px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((page) => Math.max(0, page - 1))
+                }
+                disabled={currentPage === 0 || loading}
+              >
+                ← Precedente
+              </button>
+
+              <span>
+                Pagina {currentPage + 1} di {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((page) =>
+                    Math.min(totalPages - 1, page + 1)
+                  )
+                }
+                disabled={currentPage >= totalPages - 1 || loading}
+              >
+                Successiva →
+              </button>
             </div>
           )}
         </div>

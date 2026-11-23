@@ -17,6 +17,7 @@ export default function DashboardPage() {
   const [premiumBusy, setPremiumBusy] = useState(false);
   const [premiumError, setPremiumError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [scoutOverview, setScoutOverview] = useState({ shortlistCount: 0, evaluatedCount: 0 });
 
   useEffect(() => {
     async function checkUser() {
@@ -78,6 +79,49 @@ export default function DashboardPage() {
         setSubscriptionActive(
           subscription?.status === "active"
         );
+
+        if (ruolo === "Scout" && subscription?.status === "active") {
+          const { data: shortlist, error: shortlistError } = await supabase
+            .from("shortlists")
+            .select("id")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          if (shortlistError) {
+            console.error("Errore caricamento riepilogo shortlist:", shortlistError);
+          } else if (shortlist?.id) {
+            const { data: savedPlayers, error: savedPlayersError } = await supabase
+              .from("shortlist_players")
+              .select("player_id")
+              .eq("shortlist_id", shortlist.id);
+
+            if (savedPlayersError) {
+              console.error("Errore caricamento giocatori shortlist:", savedPlayersError);
+            } else {
+              const playerIds = savedPlayers?.map((item) => item.player_id) ?? [];
+              let evaluatedCount = 0;
+
+              if (playerIds.length > 0) {
+                const { data: ratings, error: ratingsError } = await supabase
+                  .from("scout_ratings")
+                  .select("player_id")
+                  .eq("user_id", user.id)
+                  .in("player_id", playerIds);
+
+                if (ratingsError) {
+                  console.error("Errore caricamento valutazioni scout:", ratingsError);
+                } else {
+                  evaluatedCount = ratings?.length ?? 0;
+                }
+              }
+
+              setScoutOverview({
+                shortlistCount: playerIds.length,
+                evaluatedCount,
+              });
+            }
+          }
+        }
       }
 
       setLoading(false);
@@ -303,6 +347,28 @@ export default function DashboardPage() {
                 ? "ATTENDI..."
                 : "GESTISCI ABBONAMENTO"}
             </button>
+          </div>
+        )}
+
+        {isScout && subscriptionActive && (
+          <div className="dashboard-grid">
+            <div className="dashboard-card">
+              <span>SCOUTING OVERVIEW</span>
+              <h2>{scoutOverview.shortlistCount}</h2>
+              <p>Giocatori salvati nella tua shortlist.</p>
+              <strong>PROFILI SALVATI</strong>
+            </div>
+
+            <div className="dashboard-card">
+              <span>VALUTAZIONI</span>
+              <h2>{scoutOverview.evaluatedCount}</h2>
+              <p>
+                Profili della shortlist con una tua valutazione.
+              </p>
+              <strong>
+                {Math.max(0, scoutOverview.shortlistCount - scoutOverview.evaluatedCount)} DA VALUTARE
+              </strong>
+            </div>
           </div>
         )}
 

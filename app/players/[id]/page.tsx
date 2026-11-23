@@ -270,7 +270,6 @@ export default function PlayerDetailPage() {
         .from("shortlists")
         .select("id")
         .eq("user_id", user.id)
-        .limit(1)
         .maybeSingle();
 
       if (!shortlistError && shortlist?.id) {
@@ -622,7 +621,6 @@ export default function PlayerDetailPage() {
         .from("shortlists")
         .select("id")
         .eq("user_id", user.id)
-        .limit(1)
         .maybeSingle();
 
       if (shortlistError) {
@@ -646,7 +644,6 @@ export default function PlayerDetailPage() {
         .from("shortlists")
         .insert({
           user_id: user.id,
-          player_id: player.id,
         })
         .select("id")
         .single();
