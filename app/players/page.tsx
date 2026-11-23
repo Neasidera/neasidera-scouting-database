@@ -206,6 +206,7 @@ export default function PlayersPage() {
   const [accessReady, setAccessReady] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const [totalCount, setTotalCount] = useState(0);
+  const [sortBy, setSortBy] = useState("recent");
 
   const [search, setSearch] = useState("");
   const [ruolo, setRuolo] = useState("");
@@ -239,11 +240,14 @@ export default function PlayersPage() {
     premiumPlayers.map((player) => player.id)
   );
 
-  const orderedPlayers = [...players].sort(
-    (a, b) =>
-      Number(premiumPlayerIds.has(b.id)) -
-      Number(premiumPlayerIds.has(a.id))
-  );
+  const orderedPlayers =
+    sortBy === "recent"
+      ? [...players].sort(
+          (a, b) =>
+            Number(premiumPlayerIds.has(b.id)) -
+            Number(premiumPlayerIds.has(a.id))
+        )
+      : players;
 
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
@@ -366,6 +370,7 @@ export default function PlayersPage() {
     setCurrentPage(0);
   }, [
     search,
+    sortBy,
     ruolo,
     posizione,
     piede,
@@ -394,14 +399,26 @@ export default function PlayersPage() {
           "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, visibile",
           { count: "exact" }
         )
-        .eq("visibile", true)
-        .order("created_at", {
-          ascending: false,
-        })
-        .range(
-          currentPage * PAGE_SIZE,
-          (currentPage + 1) * PAGE_SIZE - 1
-        );
+        .eq("visibile", true);
+
+      // Ordina nel database prima della paginazione, per mantenere
+      // un ordine coerente anche passando da una pagina all’altra.
+      if (sortBy === "youngest") {
+        query = query.order("data_nascita", { ascending: false, nullsFirst: false });
+      } else if (sortBy === "oldest") {
+        query = query.order("data_nascita", { ascending: true, nullsFirst: false });
+      } else if (sortBy === "tallest") {
+        query = query.order("altezza", { ascending: false, nullsFirst: false });
+      } else if (sortBy === "shortest") {
+        query = query.order("altezza", { ascending: true, nullsFirst: false });
+      } else {
+        query = query.order("created_at", { ascending: false });
+      }
+
+      query = query.range(
+        currentPage * PAGE_SIZE,
+        (currentPage + 1) * PAGE_SIZE - 1
+      );
 
       // A filtri vuoti, i profili già mostrati nella sezione Premium
       // vengono esclusi dalla lista ordinaria per evitare duplicati.
@@ -507,6 +524,7 @@ export default function PlayersPage() {
   }, [
     accessReady,
     currentPage,
+    sortBy,
     search,
     ruolo,
     posizione,
@@ -866,6 +884,21 @@ export default function PlayersPage() {
             <span>PROFILI DISPONIBILI</span>
 
             <strong>{totalCount}</strong>
+          </div>
+
+          <div className="players-field" style={{ maxWidth: "240px", margin: "0 0 20px auto" }}>
+            <label htmlFor="sortBy">ORDINA PER</label>
+            <select
+              id="sortBy"
+              value={sortBy}
+              onChange={(event) => setSortBy(event.target.value)}
+            >
+              <option value="recent">Più recenti</option>
+              <option value="youngest">Più giovani</option>
+              <option value="oldest">Più grandi</option>
+              <option value="tallest">Più alti</option>
+              <option value="shortest">Più bassi</option>
+            </select>
           </div>
 
           {message && (
