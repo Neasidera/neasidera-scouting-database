@@ -20,11 +20,21 @@ type Player = {
   bio: string | null;
 };
 
+type ScoutRatingSummary = {
+  player_id: string;
+  complessiva: number | null;
+  status: string | null;
+};
+
 export default function ShortlistPage() {
   const router = useRouter();
   const supabase = createClient();
 
   const [players, setPlayers] = useState<Player[]>([]);
+  const [accountRole, setAccountRole] = useState<string | null>(null);
+  const [ratingsByPlayer, setRatingsByPlayer] = useState<
+    Record<string, ScoutRatingSummary>
+  >({});
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
@@ -62,6 +72,7 @@ export default function ShortlistPage() {
 
       const ruoloAccount =
         profile?.ruolo_account;
+      setAccountRole(ruoloAccount ?? null);
 
       if (
         ruoloAccount !== "Scout" &&
@@ -185,6 +196,29 @@ export default function ShortlistPage() {
         );
 
       setPlayers(orderedPlayers);
+
+      if (ruoloAccount === "Scout") {
+        const {
+          data: ratingData,
+          error: ratingsError,
+        } = await supabase
+          .from("scout_ratings")
+          .select("player_id, complessiva, status")
+          .eq("user_id", user.id)
+          .in("player_id", playerIds);
+
+        if (!ratingsError && ratingData) {
+          const ratingsMap = Object.fromEntries(
+            ratingData.map((rating) => [
+              rating.player_id,
+              rating,
+            ])
+          ) as Record<string, ScoutRatingSummary>;
+
+          setRatingsByPlayer(ratingsMap);
+        }
+      }
+
       setLoading(false);
     }
 
@@ -476,6 +510,27 @@ export default function ShortlistPage() {
                         </strong>
                       </div>
                     </div>
+
+                    {accountRole === "Scout" && (
+                      <div className="shortlist-player-evaluation">
+                        <span>VALUTAZIONE SCOUT</span>
+                        {ratingsByPlayer[player.id] ? (
+                          <>
+                            <strong>
+                              {ratingsByPlayer[player.id].complessiva !== null
+                                ? `${ratingsByPlayer[player.id].complessiva}/5`
+                                : "Da completare"}
+                            </strong>
+                            <span>
+                              {ratingsByPlayer[player.id].status ??
+                                "Stato non definito"}
+                            </span>
+                          </>
+                        ) : (
+                          <span>Non ancora valutato</span>
+                        )}
+                      </div>
+                    )}
 
                     <div className="shortlist-player-actions">
                       <a
