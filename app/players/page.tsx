@@ -203,6 +203,9 @@ export default function PlayersPage() {
   const [premiumPlayers, setPremiumPlayers] = useState<Player[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
+  const [accessReady, setAccessReady] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
 
   const [search, setSearch] = useState("");
   const [ruolo, setRuolo] = useState("");
@@ -227,13 +230,38 @@ const orderedPlayers = [...players].sort(
     Number(premiumPlayerIds.has(a.id))
 );
 
+  const hasActiveFilters = Boolean(
+    search.trim() ||
+    ruolo ||
+    posizione ||
+    piede ||
+    categoria.trim() ||
+    provincia.trim() ||
+    club.trim() ||
+    annoDa ||
+    annoA ||
+    altezzaMin ||
+    altezzaMax
+  );
+
+  const premiumPlayerIds = new Set(
+    premiumPlayers.map((player) => player.id)
+  );
+
+  const orderedPlayers = [...players].sort(
+    (a, b) =>
+      Number(premiumPlayerIds.has(b.id)) -
+      Number(premiumPlayerIds.has(a.id))
+  );
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  // Verifica accesso una sola volta: non ripetere auth e abbonamento
+  // a ogni modifica dei filtri o cambio pagina.
   useEffect(() => {
     let cancelled = false;
 
-    const timeout = window.setTimeout(async () => {
-      setLoading(true);
-      setMessage("");
-
+    async function checkAccess() {
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -258,8 +286,7 @@ const orderedPlayers = [...players].sort(
 
       if (profileError) {
         setMessage(
-          "Errore verifica account: " +
-            profileError.message
+          "Errore verifica account: " + profileError.message
         );
         setLoading(false);
         return;
@@ -333,16 +360,67 @@ const orderedPlayers = [...players].sort(
         return;
       }
 
+      setAccessReady(true);
+    }
+
+    checkAccess();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
+
+  // Ogni nuova ricerca riparte dalla prima pagina.
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [
+    search,
+    ruolo,
+    posizione,
+    piede,
+    categoria,
+    provincia,
+    club,
+    annoDa,
+    annoA,
+    altezzaMin,
+    altezzaMax,
+  ]);
+
+  // Recupera solo la pagina richiesta e il conteggio esatto dei risultati.
+  useEffect(() => {
+    if (!accessReady) return;
+
+    let cancelled = false;
+
+    const timeout = window.setTimeout(async () => {
+      setLoading(true);
+      setMessage("");
+
       let query = supabase
         .from("players")
         .select(
-          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, visibile"
+          "id, nome, cognome, data_nascita, altezza, piede, ruolo, posizione, club, categoria, provincia, video, visibile",
+          { count: "exact" }
         )
         .eq("visibile", true)
         .order("created_at", {
           ascending: false,
         })
-        .range(0, PAGE_SIZE - 1);
+        .range(
+          currentPage * PAGE_SIZE,
+          (currentPage + 1) * PAGE_SIZE - 1
+        );
+
+      // A filtri vuoti, i profili già mostrati nella sezione Premium
+      // vengono esclusi dalla lista ordinaria per evitare duplicati.
+      if (!hasActiveFilters && premiumPlayerIds.size > 0) {
+        query = query.not(
+          "id",
+          "in",
+          `(${Array.from(premiumPlayerIds).join(",")})`
+        );
+      }
 
       if (search.trim()) {
         const term = search.trim().replace(/,/g, " ");
@@ -385,49 +463,47 @@ const orderedPlayers = [...players].sort(
         );
       }
 
-      if (/^\d{4}$/.test(annoDa)) {
+      if (/^\\d{4}$/.test(annoDa)) {
         query = query.gte(
           "data_nascita",
           `${annoDa}-01-01`
         );
       }
 
-      if (/^\d{4}$/.test(annoA)) {
+      if (/^\\d{4}$/.test(annoA)) {
         query = query.lte(
           "data_nascita",
           `${annoA}-12-31`
         );
       }
 
-      if (/^\d+$/.test(altezzaMin)) {
+      if (/^\\d+$/.test(altezzaMin)) {
         query = query.gte(
           "altezza",
           Number(altezzaMin)
         );
       }
 
-      if (/^\d+$/.test(altezzaMax)) {
+      if (/^\\d+$/.test(altezzaMax)) {
         query = query.lte(
           "altezza",
           Number(altezzaMax)
         );
       }
 
-      const {
-        data,
-        error,
-      } = await query;
+      const { data, error, count } = await query;
 
       if (cancelled) return;
 
       if (error) {
         setMessage(
-          "Errore caricamento giocatori: " +
-            error.message
+          "Errore caricamento giocatori: " + error.message
         );
         setPlayers([]);
+        setTotalCount(0);
       } else {
         setPlayers(data || []);
+        setTotalCount(count ?? data?.length ?? 0);
       }
 
       setLoading(false);
@@ -438,6 +514,8 @@ const orderedPlayers = [...players].sort(
       window.clearTimeout(timeout);
     };
   }, [
+    accessReady,
+    currentPage,
     search,
     ruolo,
     posizione,
@@ -449,6 +527,7 @@ const orderedPlayers = [...players].sort(
     annoA,
     altezzaMin,
     altezzaMax,
+    premiumPlayers,
     supabase,
   ]);
 
@@ -767,7 +846,7 @@ const orderedPlayers = [...players].sort(
           </div>
         </div>
 
-        {premiumPlayers.length > 0 && (
+        {!hasActiveFilters && premiumPlayers.length > 0 && (
           <div className="players-results">
             <div className="players-results-title">
               <span>✦ NEASIDERA PREMIUM</span>
@@ -795,11 +874,7 @@ const orderedPlayers = [...players].sort(
           <div className="players-results-title">
             <span>PROFILI DISPONIBILI</span>
 
-            <strong>
-              {players.length === PAGE_SIZE
-                ? "50+"
-                : players.length}
-            </strong>
+            <strong>{totalCount}</strong>
           </div>
 
           {message && (
@@ -827,6 +902,45 @@ const orderedPlayers = [...players].sort(
                   player={player}
                 />
               ))}
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div
+              className="players-pagination"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "16px",
+                marginTop: "28px",
+              }}
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((page) => Math.max(0, page - 1))
+                }
+                disabled={currentPage === 0 || loading}
+              >
+                ← Precedente
+              </button>
+
+              <span>
+                Pagina {currentPage + 1} di {totalPages}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setCurrentPage((page) =>
+                    Math.min(totalPages - 1, page + 1)
+                  )
+                }
+                disabled={currentPage >= totalPages - 1 || loading}
+              >
+                Successiva →
+              </button>
             </div>
           )}
         </div>
