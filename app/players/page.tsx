@@ -454,28 +454,28 @@ export default function PlayersPage() {
         );
       }
 
-      if (/^\\d{4}$/.test(annoDa)) {
+      if (/^\d{4}$/.test(annoDa)) {
         query = query.gte(
           "data_nascita",
           `${annoDa}-01-01`
         );
       }
 
-      if (/^\\d{4}$/.test(annoA)) {
+      if (/^\d{4}$/.test(annoA)) {
         query = query.lte(
           "data_nascita",
           `${annoA}-12-31`
         );
       }
 
-      if (/^\\d+$/.test(altezzaMin)) {
+      if (/^\d+$/.test(altezzaMin)) {
         query = query.gte(
           "altezza",
           Number(altezzaMin)
         );
       }
 
-      if (/^\\d+$/.test(altezzaMax)) {
+      if (/^\d+$/.test(altezzaMax)) {
         query = query.lte(
           "altezza",
           Number(altezzaMax)
